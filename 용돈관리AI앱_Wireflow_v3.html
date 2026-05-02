@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>용돈 AI — Wireflow v3 (RFM 기반)</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Noto Sans KR', sans-serif; background: #F0EDE8; padding: 48px; min-width: 3800px; }
+.header { margin-bottom: 28px; }
+.header .team { font-size: 11px; font-weight: 700; color: #999; letter-spacing: 0.12em; margin-bottom: 6px; }
+.header h1 { font-size: 26px; font-weight: 900; color: #1A1A1A; letter-spacing: -0.03em; margin-bottom: 4px; }
+.header p { font-size: 12px; color: #888; }
+.legend { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 28px; padding: 12px 18px; background: white; border-radius: 10px; border: 1px solid #DDD; width: fit-content; }
+.lg { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #444; font-weight: 600; }
+.lg-sq { width: 10px; height: 10px; border-radius: 2px; }
+
+.phone { position: absolute; width: 240px; background: white; border-radius: 28px; border: 2px solid #2C1810; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+.phone-notch { height: 18px; background: #111; display: flex; align-items: center; justify-content: center; }
+.phone-notch::after { content:''; width:50px; height:8px; background:#222; border-radius:100px; }
+.phone-label { position: absolute; top: -26px; left: 0; font-size: 11px; font-weight: 900; color: #1A1A1A; white-space: nowrap; }
+.sn { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; background: #2C1810; color: white; font-size: 9px; font-weight: 700; border-radius: 50%; margin-right: 4px; }
+.st { height: 16px; background: #111; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; }
+.st span { font-size: 7px; color: white; font-weight: 600; }
+.tnav { display: flex; align-items: center; justify-content: space-between; padding: 6px 10px 5px; }
+.tnav-title { font-size: 13px; font-weight: 900; color: #1A1A1A; }
+.bnav { display: flex; justify-content: space-around; padding: 5px 0 8px; border-top: 1px solid #E5E7EB; background: white; }
+.bni { display: flex; flex-direction: column; align-items: center; gap: 1px; font-size: 7px; font-weight: 600; color: #9CA3AF; }
+.bni.on { color: #2F6FED; }
+.bni-i { font-size: 13px; }
+.bcard { background: linear-gradient(135deg,#2F6FED,#1A4DB8); margin: 0 8px 7px; border-radius: 12px; padding: 10px; color: white; }
+.bc-l { font-size: 7px; opacity: 0.7; margin-bottom: 2px; }
+.bc-a { font-size: 18px; font-weight: 900; margin-bottom: 6px; }
+.bc-bar { background: rgba(255,255,255,0.2); border-radius: 100px; height: 4px; margin-bottom: 3px; }
+.bc-fill { background: white; height: 100%; border-radius: 100px; }
+.bc-m { display: flex; justify-content: space-between; font-size: 6px; opacity: 0.7; }
+
+/* RFM 미니 그리드 */
+.rfm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin: 0 8px 7px; }
+.rfm-cell { border-radius: 8px; padding: 6px 7px; }
+.rfm-cell.r { background: #ECFEFF; border: 1px solid #BAE6FD; }
+.rfm-cell.f { background: #EDE9FE; border: 1px solid #C4B5FD; }
+.rfm-cell.m1 { background: #D1FAE5; border: 1px solid #A7F3D0; }
+.rfm-cell.m2 { background: #FEF9C3; border: 1px solid #FDE68A; }
+.rfm-cell-tag { font-size: 7px; font-weight: 700; margin-bottom: 2px; }
+.rfm-cell-tag.r { color: #0891B2; }
+.rfm-cell-tag.f { color: #7C3AED; }
+.rfm-cell-tag.m { color: #059669; }
+.rfm-cell-tag.y { color: #D97706; }
+.rfm-cell-val { font-size: 14px; font-weight: 900; }
+.rfm-cell-val.r { color: #0891B2; }
+.rfm-cell-val.f { color: #7C3AED; }
+.rfm-cell-val.m { color: #059669; }
+.rfm-cell-val.y { color: #D97706; }
+.rfm-cell-desc { font-size: 6px; color: #666; }
+
+.aicard { background: #FFF8F0; border: 1px solid #FECDAA; margin: 0 8px 7px; border-radius: 10px; padding: 8px; }
+.aih { display: flex; align-items: center; gap: 5px; margin-bottom: 5px; }
+.aiav { width: 20px; height: 20px; background: #FF6B35; border-radius: 50%; font-size: 10px; display: flex; align-items: center; justify-content: center; }
+.ainm { font-size: 9px; font-weight: 700; color: #C0440A; }
+.aimsg { font-size: 8px; line-height: 1.5; background: white; border-radius: 2px 8px 8px 8px; padding: 5px 7px; }
+.aimsg strong { color: #FF6B35; }
+
+.tx { display: flex; align-items: center; gap: 6px; padding: 5px 10px; border-bottom: 1px solid #F0EFED; }
+.tx:last-child { border-bottom: none; }
+.txi { width: 26px; height: 26px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
+.txinfo { flex: 1; }
+.txn { font-size: 9px; font-weight: 600; margin-bottom: 1px; }
+.txm { font-size: 7px; color: #999; }
+.txr { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; }
+.txa { font-size: 9px; font-weight: 700; }
+.tag { font-size: 6px; font-weight: 700; padding: 1px 4px; border-radius: 100px; }
+.tag-night { background: #EDE9FE; color: #7C3AED; }
+.tag-repeat { background: #ECFEFF; color: #0891B2; }
+.tag-normal { background: #DCFCE7; color: #16A34A; }
+
+/* 입력 폼 */
+.fl { font-size: 7px; font-weight: 700; color: #999; letter-spacing: 0.08em; padding: 0 10px; margin-bottom: 2px; }
+.fi { margin: 0 8px 6px; background: white; border: 1.5px solid #E5E7EB; border-radius: 8px; padding: 6px 9px; font-size: 10px; font-weight: 600; font-family: 'Noto Sans KR',sans-serif; }
+.fi.foc { border-color: #2F6FED; }
+.fi.big { font-size: 16px; font-weight: 900; }
+.chips { display: flex; gap: 4px; flex-wrap: wrap; padding: 0 8px 6px; }
+.chip { padding: 2px 7px; border-radius: 100px; font-size: 7px; font-weight: 600; border: 1px solid #E5E7EB; color: #9CA3AF; background: white; }
+.chip.on { background: #2F6FED; color: white; border-color: #2F6FED; }
+
+/* 자동계산 박스 */
+.auto-box { margin: 0 8px 6px; background: #ECFEFF; border: 1px solid #BAE6FD; border-radius: 8px; overflow: hidden; }
+.auto-hdr { background: #0891B2; padding: 4px 8px; font-size: 7px; font-weight: 700; color: white; display: flex; justify-content: space-between; }
+.auto-hdr span:last-child { opacity: 0.7; font-size: 6px; }
+.auto-body { padding: 7px 8px; }
+.auto-item { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
+.auto-item:last-child { margin-bottom: 0; }
+.auto-icon { width: 22px; height: 22px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; }
+.auto-text .at { font-size: 8px; font-weight: 700; margin-bottom: 1px; }
+.auto-text .as { font-size: 7px; color: #666; }
+.auto-badge { font-size: 7px; font-weight: 700; padding: 1px 5px; border-radius: 100px; background: #059669; color: white; flex-shrink: 0; margin-left: auto; }
+
+.sbtn { margin: 3px 8px 7px; background: #2F6FED; color: white; border: none; border-radius: 9px; padding: 9px; font-size: 9px; font-weight: 700; font-family: 'Noto Sans KR',sans-serif; width: calc(100% - 16px); text-align: center; }
+
+/* AI 분석 결과 */
+.rfm-result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin: 0 8px 7px; }
+.rfm-res-card { border-radius: 9px; padding: 8px; }
+.rfm-res-card.r { background: #ECFEFF; border: 1px solid #BAE6FD; }
+.rfm-res-card.f { background: #EDE9FE; border: 1px solid #C4B5FD; }
+.rfm-res-card.m1 { background: #D1FAE5; border: 1px solid #A7F3D0; }
+.rfm-res-card.m2 { background: #FEF9C3; border: 1px solid #FDE68A; }
+.rrc-lbl { font-size: 7px; font-weight: 700; margin-bottom: 3px; }
+.rrc-lbl.r { color: #0891B2; }
+.rrc-lbl.f { color: #7C3AED; }
+.rrc-lbl.m { color: #059669; }
+.rrc-lbl.y { color: #D97706; }
+.rrc-val { font-size: 16px; font-weight: 900; margin-bottom: 2px; }
+.rrc-val.r { color: #0891B2; }
+.rrc-val.f { color: #7C3AED; }
+.rrc-val.m { color: #059669; }
+.rrc-val.y { color: #D97706; }
+.rrc-st { font-size: 7px; font-weight: 700; }
+
+.ilist { margin: 0 8px 7px; background: white; border-radius: 9px; padding: 7px 9px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.ins { display: flex; gap: 5px; align-items: flex-start; margin-bottom: 4px; }
+.ins:last-child { margin-bottom: 0; }
+.idot { width: 5px; height: 5px; border-radius: 50%; margin-top: 3px; flex-shrink: 0; }
+.itext { font-size: 7px; line-height: 1.5; color: #333; }
+
+/* 챗봇 */
+.cwrap { padding: 7px 8px 60px; }
+.cbub { display: flex; gap: 5px; margin-bottom: 7px; align-items: flex-start; }
+.cbub.u { flex-direction: row-reverse; }
+.cav { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; flex-shrink: 0; }
+.cav.ai { background: #FF6B35; }
+.cav.me { background: #2F6FED; color: white; font-size: 7px; font-weight: 700; }
+.cmsg { max-width: 76%; background: white; border-radius: 2px 8px 8px 8px; padding: 5px 7px; font-size: 7.5px; line-height: 1.55; box-shadow: 0 1px 3px rgba(0,0,0,0.07); }
+.cbub.u .cmsg { background: #2F6FED; color: white; border-radius: 8px 2px 8px 8px; }
+.cmsg strong { color: #FF6B35; }
+.cbub.u .cmsg strong { color: #FCD34D; }
+.rfm-ctag { display: inline-block; border-radius: 100px; font-size: 6px; font-weight: 700; padding: 1px 4px; margin-bottom: 1px; }
+.cinput-bar { display: flex; gap: 4px; margin: 0 8px; }
+.cinput-f { flex: 1; background: white; border: 1px solid #E5E7EB; border-radius: 100px; padding: 5px 9px; font-size: 7px; font-family: 'Noto Sans KR',sans-serif; }
+.csend { width: 24px; height: 24px; background: #2F6FED; border: none; border-radius: 50%; color: white; font-size: 9px; display: flex; align-items: center; justify-content: center; }
+
+/* 스플래시 */
+.splash { background: linear-gradient(160deg,#1A4DB8,#2F6FED); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 26px 16px; min-height: 250px; }
+.slogo { width: 46px; height: 46px; background: white; border-radius: 13px; display: flex; align-items: center; justify-content: center; font-size: 22px; margin-bottom: 10px; }
+.stit { font-size: 18px; font-weight: 900; color: white; margin-bottom: 2px; }
+.ssub2 { font-size: 8px; color: rgba(255,255,255,0.7); margin-bottom: 20px; }
+.sp-btn { background: white; color: #2F6FED; border: none; border-radius: 8px; padding: 8px; font-size: 9px; font-weight: 700; font-family: 'Noto Sans KR',sans-serif; margin-bottom: 5px; width: 100%; text-align: center; }
+.sp-btn2 { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; padding: 8px; font-size: 9px; font-weight: 700; font-family: 'Noto Sans KR',sans-serif; width: 100%; text-align: center; }
+
+/* 마이페이지 */
+.rp-card { background: white; margin: 0 8px 7px; border-radius: 10px; padding: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.rp-title { font-size: 9px; font-weight: 700; margin-bottom: 7px; }
+.rp-stats { display: flex; justify-content: space-around; margin-bottom: 7px; }
+.rp-stat { text-align: center; }
+.rp-stat-n { font-size: 13px; font-weight: 900; }
+.rp-stat-l { font-size: 6px; color: #999; }
+.rp-bar-row { display: flex; align-items: center; gap: 5px; margin-bottom: 3px; }
+.rp-bar-bg { flex: 1; background: #F0EFED; border-radius: 100px; height: 5px; }
+.rp-bar-fill { height: 100%; border-radius: 100px; }
+
+/* 설정 */
+.set-group { background: white; border-radius: 10px; margin: 0 8px 7px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.set-group-title { font-size: 7px; font-weight: 700; color: #999; padding: 7px 10px 3px; letter-spacing: 0.08em; }
+.set-row { display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; border-bottom: 1px solid #F5F3EF; }
+.set-row:last-child { border-bottom: none; }
+.set-lbl { font-size: 8px; font-weight: 500; }
+.set-arrow { font-size: 10px; color: #CCC; }
+.set-tog { width: 26px; height: 14px; background: #2F6FED; border-radius: 100px; position: relative; }
+.set-togd { position: absolute; right: 2px; top: 2px; width: 10px; height: 10px; background: white; border-radius: 50%; }
+
+/* 알림 */
+.notif-item { display: flex; gap: 7px; align-items: flex-start; padding: 7px 10px; border-bottom: 1px solid #F5F3EF; }
+.notif-item:last-child { border-bottom: none; }
+
+/* HS */
+.hs { position: absolute; border: 2px dashed; border-radius: 5px; pointer-events: none; }
+.hs-lbl { position: absolute; font-size: 6.5px; font-weight: 700; padding: 1px 5px; border-radius: 100px; white-space: nowrap; }
+.sbadge { position: absolute; bottom: -30px; left: 50%; transform: translateX(-50%); background: #2C1810; color: white; font-size: 9px; font-weight: 700; padding: 3px 10px; border-radius: 100px; white-space: nowrap; }
+.group-label { position: absolute; font-size: 10px; font-weight: 700; color: white; background: #444; padding: 3px 10px; border-radius: 100px; letter-spacing: 0.05em; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="team">LG AI 청소년캠프 · 팀 AIG · 용돈 관리 AI 앱 — Wireflow v3 (RFM 기반)</div>
+  <h1>Detailed Wireflow — 전체 화면 전환 흐름</h1>
+  <p>주관적 감정 입력(인지/감정 차원) 제거 → RFM 자동 계산으로 전면 교체 · DuPont(1945~65) · Stern(1962)</p>
+</div>
+
+<div class="legend">
+  <div class="lg"><div class="lg-sq" style="background:#FF6B35;"></div>주요 이동</div>
+  <div class="lg"><div class="lg-sq" style="background:#2F6FED;"></div>AI 관련 이동</div>
+  <div class="lg"><div class="lg-sq" style="background:#16A34A;"></div>리포트/설정</div>
+  <div class="lg"><div class="lg-sq" style="background:#888;"></div>뒤로가기</div>
+  <div class="lg"><div class="lg-sq" style="background:#ECFEFF;border:2px solid #0891B2;"></div>R · 야간구매 자동계산</div>
+  <div class="lg"><div class="lg-sq" style="background:#EDE9FE;border:2px solid #7C3AED;"></div>F · 반복구매 자동계산</div>
+  <div class="lg"><div class="lg-sq" style="background:#D1FAE5;border:2px solid #059669;"></div>M · 예산/비필수 자동계산</div>
+  <div class="lg"><div class="lg-sq" style="background:#DC2626;opacity:0.5;"></div>삭제됨: 주관적 감정 입력</div>
+</div>
+
+<div style="position:relative; width:3700px; height:2200px;">
+
+<!-- GROUP LABELS -->
+<div class="group-label" style="left:60px;top:20px;">① 온보딩 플로우</div>
+<div class="group-label" style="left:1100px;top:20px;">② 홈(메인) 화면</div>
+<div class="group-label" style="left:1700px;top:20px;">③ 알림</div>
+<div class="group-label" style="left:1100px;top:820px;">④ 소비 기록 플로우</div>
+<div class="group-label" style="left:1100px;top:1620px;">⑤ AI 분석 / 챗봇</div>
+<div class="group-label" style="left:2600px;top:20px;">⑥ 마이페이지 플로우</div>
+
+<!-- ①  온보딩 -->
+<!-- S0 스플래시 -->
+<div class="phone" style="left:60px;top:60px;width:220px;">
+  <div class="phone-label"><span class="sn">0</span>스플래시</div>
+  <div class="phone-notch"></div>
+  <div class="splash">
+    <div class="slogo">💰</div>
+    <div class="stit">용돈AI</div>
+    <div class="ssub2">나만의 소비 코치</div>
+    <div style="position:relative;width:100%;margin-bottom:5px;">
+      <div class="sp-btn">로그인</div>
+      <div class="hs" style="inset:0;border-color:#FF6B35;border-radius:8px;"></div>
+      <div class="hs-lbl" style="bottom:-12px;left:50%;transform:translateX(-50%);background:#FF6B35;color:white;">탭 → 로그인</div>
+    </div>
+    <div style="height:14px;"></div>
+    <div style="position:relative;width:100%;">
+      <div class="sp-btn2">회원가입</div>
+      <div class="hs" style="inset:0;border-color:#16A34A;border-radius:8px;"></div>
+      <div class="hs-lbl" style="bottom:-12px;left:50%;transform:translateX(-50%);background:#16A34A;color:white;">탭 → 회원가입</div>
+    </div>
+  </div>
+  <div class="sbadge">스플래시</div>
+</div>
+
+<!-- S1 로그인 -->
+<div class="phone" style="left:340px;top:60px;width:220px;">
+  <div class="phone-label"><span class="sn">1</span>로그인</div>
+  <div class="phone-notch"></div>
+  <div class="st"><span>9:41</span><span>🔋</span></div>
+  <div class="tnav"><div style="font-size:14px;color:#999;">←</div><div class="tnav-title">로그인</div><div style="width:24px;"></div></div>
+  <div style="padding:10px 12px;">
+    <div style="font-size:13px;font-weight:900;margin-bottom:3px;">다시 오셨군요! 👋</div>
+    <div style="font-size:7px;color:#999;margin-bottom:12px;">용돈AI와 스마트한 소비 시작해요</div>
+    <div style="margin-bottom:7px;"><div style="font-size:7px;font-weight:700;color:#999;margin-bottom:2px;">이메일</div><div class="fi foc" style="margin:0;">aarin@example.com</div></div>
+    <div style="margin-bottom:10px;"><div style="font-size:7px;font-weight:700;color:#999;margin-bottom:2px;">비밀번호</div><div class="fi" style="margin:0;">••••••••</div></div>
+    <div style="position:relative;margin-bottom:10px;">
+      <div style="background:#2F6FED;color:white;border-radius:8px;padding:9px;font-size:9px;font-weight:700;text-align:center;">로그인</div>
+      <div class="hs" style="inset:0;border-color:#FF6B35;border-radius:8px;"></div>
+      <div class="hs-lbl" style="bottom:-12px;left:50%;transform:translateX(-50%);background:#FF6B35;color:white;">탭 → 홈(메인)</div>
+    </div>
+    <div style="display:flex;gap:6px;">
+      <div style="position:relative;flex:1;border:1px solid #E5E7EB;border-radius:8px;padding:6px;text-align:center;font-size:8px;font-weight:600;">🟡 카카오
+        <div class="hs" style="inset:0;border-color:#D97706;border-radius:8px;"></div>
+        <div class="hs-lbl" style="bottom:-12px;left:50%;transform:translateX(-50%);background:#D97706;color:white;">탭→홈</div>
+      </div>
+      <div style="position:relative;flex:1;border:1px solid #E5E7EB;border-radius:8px;padding:6px;text-align:center;font-size:8px;font-weight:600;">🔵 구글
+        <div class="hs" style="inset:0;border-color:#2F6FED;border-radius:8px;"></div>
+        <div class="hs-lbl" style="bottom:-12px;left:50%;transform:translateX(-50%);background:#2F6FED;color:white;">탭→홈</div>
+      </div>
+    </div>
+  </div>
+  <div class="sbadge">로그인</div>
+</div>
+
+<!-- S2 회원가입 -->
+<div class="phone" style="left:620px;top:60px;width:220px;">
+  <div class="phone-label"><span class="sn">2</span>회원가입</div>
+  <div class="phone-notch"></div>
+  <div class="st"><span>9:41</span><span>🔋</span></div>
+  <div class="tnav"><div style="font-size:14px;color:#999;">←</div><div class="tnav-title">회원가입</div><div style="width:24px;"></div></div>
+  <div style="padding:10px 12px;">
+    <div style="font-size:13px;font-weight:900;margin-bottom:10px;">용돈AI 시작하기 🚀</div>
+    <div style="display:flex;gap:4px;margin-bottom:10px;">
+      <div style="flex:1;height:3px;background:#2F6FED;border-radius:100px;"></div>
+      <div style="flex:1;height:3px;background:#2F6FED;border-radius:100px;"></div>
+      <div style="flex:1;height:3px;background:#E5E7EB;border-radius:100px;"></div>
+    </div>
+    <div style="margin-bottom:6px;"><div style="font-size:7px;font-weight:700;color:#999;margin-bottom:2px;">이름</div><div class="fi foc" style="margin:0;">김아린</div></div>
+    <div style="margin-bottom:6px;"><div style="font-size:7px;font-weight:700;color:#999;margin-bottom:2px;">이메일</div><div class="fi" style="margin:0;">aarin@example.com</div></div>
+    <div style="margin-bottom:10px;"><div style="font-size:7px;font-weight:700;color:#999;margin-bottom:2px;">비밀번호</div><div class="fi" style="margin:0;">••••••••</div></div>
+    <div style="position:relative;">
+      <div style="background:#16A34A;color:white;border-radius:8px;padding:9px;font-size:9px;font-weight:700;text-align:center;">다음 단계 →</div>
+      <div class="hs" style="inset:0;border-color:#16A34A;border-radius:8px;"></div>
+      <div class="hs-lbl" style="bottom:-12px;left:50%;transform:translateX(-50%);background:#16A34A;color:white;">탭 → 온보딩</div>
+    </div>
+  </div>
+  <div class="sbadge">회원가입</div>
+</div>
+
+<!-- S3 온보딩 -->
+<div class="phone" style="left:900px;top:60px;width:220px;">
+  <div class="phone-label"><span class="sn">3</span>온보딩 — 예산 설정</div>
+  <div class="phone-notch"></div>
+  <div class="st"><span>9:41</span><span>🔋</span></div>
+  <div style="padding:14px 12px;display:flex;flex-direction:column;align-items:center;">
+    <div style="display:flex;gap:4px;width:100%;margin-bottom:14px;">
+      <div style="flex:1;height:3px;background:#2F6FED;border-radius:100px;"></div>
+      <div style="flex:1;height:3px;background:#2F6FED;border-radius:100px;"></div>
+      <div style="flex:1;height:3px;background:#2F6FED;border-radius:100px;"></div>
+    </div>
+    <div style="font-size:36px;margin-bottom:8px;">🎯</div>
+    <div style="font-size:13px;font-weight:900;text-align:center;margin-bottom:4px;">이번 달 예산 설정</div>
+    <div style="font-size:8px;color:#666;text-align:center;margin-bottom:14px;">용돈 금액 입력 → M 지표 자동 계산</div>
+    <div style="background:#F5F3EF;border-radius:8px;padding:9px;width:100%;margin-bottom:6px;">
+      <div style="font-size:7px;font-weight:700;margin-bottom:3px;">이번 달 용돈</div>
+      <div style="font-size:16px;font-weight:900;color:#2F6FED;">100,000원</div>
+    </div>
+    <div style="background:#F5F3EF;border-radius:8px;padding:9px;width:100%;margin-bottom:12px;">
+      <div style="font-size:7px;font-weight:700;margin-bottom:3px;">저축 목표 (선택)</div>
+      <div style="font-size:12px;font-weight:700;color:#16A34A;">20,000원</div>
+    </div>
+    <div style="position:relative;width:100%;">
+      <div style="background:#FF6B35;color:white;border-radius:8px;padding:9px;font-size:9px;font-weight:700;text-align:center;">용돈AI 시작하기 🚀</div>
+      <div class="hs" style="inset:0;border-color:#FF6B35;border-radius:8px;"></div>
+      <div class="hs-lbl" style="bottom:-12px;left:50%;transform:translateX(-50%);background:#FF6B35;color:white;">탭 → 홈(메인)</div>
+    </div>
+  </div>
+  <div class="sbadge">온보딩</div>
+</div>
+
+<!-- ② 홈(메인) -->
+<div class="phone" style="left:1180px;top:60px;width:220px;">
+  <div class="phone-label"><span class="sn">4</span>홈 (메인)</div>
+  <div class="phone-notch"></div>
+  <div class="st"><span>9:41</span><span>🔋</span></div>
+  <div class="tnav">
+    <div><div style="font-size:6px;color:#999;">안녕 👋</div><div class="tnav-title">김아린님</div></div>
+    <div style="position:relative;">
+      <div style="width:24px;height:24px;background:#E8F0FE;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;">🔔</div>
+      <div class="hs" style="inset:0;border-color:#D97706;border-radius:50%;"></div>
+      <div class="hs-lbl" style="bottom:-12px;right:0;background:#D97706;color:white;">탭→알림</div>
+    </div>
+  </div>
+  <div class="bcard"><div class="bc-l">이번 달 남은 용돈</div><div class="bc-a">38,200원</div><div class="bc-bar"><div class="bc-fill" style="width:62%;"></div></div><div class="bc-m"><span>사용 61,800원</span><span>예산 100,000원</span></div></div>
+  <!-- RFM 4개 지표 -->
+  <div style="position:relative;">
+    <div style="background:white;margin:0 8px 7px;border-radius:10px;padding:8px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+      <div style="font-size:8px;font-weight:700;color:#666;margin-bottom:6px;">📊 RFM 소비 패턴 (자동계산)</div>
+      <div class="rfm-grid">
+        <div class="rfm-cell r"><div class="rfm-cell-tag r">R · 야간구매</div><div class="rfm-cell-val r">42%</div><div class="rfm-cell-desc">밤 10시 이후</div></div>
+        <div class="rfm-cell f"><div class="rfm-cell-tag f">F · 반복구매</div><div class="rfm-cell-val f">3회</div><div class="rfm-cell-desc">7일 내 재구매</div></div>
+        <div class="rfm-cell m1"><div class="rfm-cell-tag m">M · 예산초과</div><div class="rfm-cell-val m">62%</div><div class="rfm-cell-desc">100,000원 기준</div></div>
+        <div class="rfm-cell m2"><div class="rfm-cell-tag y">M · 비필수</div><div class="rfm-cell-val y">68%</div><div class="rfm-cell-desc">오락+외식 비율</div></div>
+      </div>
+    </div>
+    <div class="hs" style="inset:0 8px;border-color:#2F6FED;border-radius:10px;"></div>
+    <div class="hs-lbl" style="bottom:-2px;right:12px;background:#2F6FED;color:white;">탭→AI분석 결과</div>
+  </div>
+  <!-- AI 피드백 -->
+  <div class="aicard"><div class="aih"><div class="aiav">🤖</div><div class="ainm">용돈이 AI</div></div><div class="aimsg">야간 구매 <strong>42%</strong>! 밤에 사는 게 많으면 충동구매 위험 🌙</div></div>
+  <!-- 소비내역 -->
+  <div style="background:white;margin:0 8px 6px;border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+    <div class="tx"><div class="txi" style="background:#FEE2E2;">🍕</div><div class="txinfo"><div class="txn">피자헛</div><div class="txm">오늘·밤11시</div></div><div class="txr"><div class="txa">−16,000</div><span class="tag tag-night">🌙야간</span></div></div>
+    <div class="tx"><div class="txi" style="background:#EDE9FE;">🎮</div><div class="txinfo"><div class="txn">게임아이템</div><div class="txm">어제·3일내재구매</div></div><div class="txr"><div class="txa">−8,000</div><span class="tag tag-repeat">🔄반복</span></div></div>
+    <div class="tx"><div class="txi" style="background:#DCFCE7;">🚌</div><div class="txinfo"><div class="txn">교통카드</div><div class="txm">어제·오후</div></div><div class="txr"><div class="txa">−5,000</div><span class="tag tag-normal">✅정상</span></div></div>
+  </div>
+  <div class="bnav">
+    <div class="bni on"><div class="bni-i">🏠</div>홈</div>
+    <div class="bni" style="position:relative;border:1.5px dashed #FF6B35;border-radius:5px;padding:2px 5px;">
+      <div class="bni-i">➕</div>기록
+      <div class="hs-lbl" style="bottom:-13px;left:50%;transform:translateX(-50%);background:#FF6B35;color:white;">탭→소비기록</div>
+    </div>
+    <div class="bni" style="position:relative;border:1.5px dashed #2F6FED;border-radius:5px;padding:2px 5px;">
+      <div class="bni-i">💬</div>AI질문
+      <div class="hs-lbl" style="bottom:-13px;left:50%;transform:translateX(-50%);background:#2F6FED;color:white;">탭→챗봇</div>
+    </div>
+    <div class="bni" style="position:relative;border:1.5px dashed #16A34A;border-radius:5px;padding:2px 5px;">
+      <div class="bni-i">📊</div>리포트
+      <div class="hs-lbl" style="bottom:-13px;left:50%;transform:translateX(-50%);background:#16A34A;color:white;">탭→마이</div>
+    </div>
+  </div>
+  <div class="sbadge">홈(메인)</div>
+</div>
+
+<!-- ③ 알림 -->
+<div class="phone" style="left:1460px;top:60px;width:220px;">
+  <div class="phone-label"><span class="sn">4A</span>알림</div>
+  <div class="phone-notch"></div>
+  <div class="st"><span>9:41</span><span>🔋</span></div>
+  <div class="tnav"><div style="font-size:14px;color:#999;">←</div><div class="tnav-title">알림</div><div style="font-size:8px;color:#2F6FED;font-weight:700;">모두읽음</div></div>
+  <div style="padding:8px;">
+    <div style="background:white;border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+      <div class="notif-item" style="background:#EFF6FF;">
+        <div style="font-size:15px;">🌙</div>
+        <div><div style="font-size:8px;font-weight:700;margin-bottom:1px;">야간 구매 비율 42% 주의</div><div style="font-size:7px;color:#666;line-height:1.5;">R 지표 — 밤 10시 이후 구매 5건 감지</div><div style="font-size:6px;color:#999;margin-top:1px;">방금 전</div></div>
+      </div>
+      <div class="notif-item">
+        <div style="font-size:15px;">🔄</div>
+        <div><div style="font-size:8px;font-weight:700;margin-bottom:1px;">오락 카테고리 반복 구매</div><div style="font-size:7px;color:#666;line-height:1.5;">F 지표 — 7일 내 3회 감지</div><div style="font-size:6px;color:#999;margin-top:1px;">1시간 전</div></div>
+      </div>
+      <div class="notif-item">
+        <div style="font-size:15px;">💸</div>
+        <div><div style="font-size:8px;font-weight:700;margin-bottom:1px;">비필수 소비 68% 경고</div><div style="font-size:7px;color:#666;line-height:1.5;">M 지표 — 오락+외식 비율 높음</div><div style="font-size:6px;color:#999;margin-top:1px;">어제</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="sbadge">알림</div>
+</div>
+
+<!-- ④ 소비 기록 -->
+<div class="phone" style="left:1080px;top:840px;width:220px;">
+  <div class="phone-label"><span class="sn">5</span>소비 기록</div>
+  <div class="phone-notch"></div>
+  <div class="st"><span>9:41</span><span>🔋</span></div>
+  <div class="tnav">
+    <div style="position:relative;"><div style="font-size:14px;border:1.5px dashed #888;border-radius:4px;padding:2px 5px;">←</div><div class="hs-lbl" style="bottom:-12px;left:0;background:#888;color:white;">탭→홈</div></div>
+    <div class="tnav-title">소비 기록</div>
+    <div style="width:24px;"></div>
+  </div>
+  <div style="height:4px;"></div>
+  <div class="fl">금액</div>
+  <div class="fi big foc">16,000원</div>
+  <div class="fl">항목명</div>
+  <div class="fi">피자헛</div>
+  <div class="fl">카테고리</div>
+  <div class="chips">
+    <div class="chip">🍔식비</div><div class="chip on">🍕외식</div>
+    <div class="chip">🎮오락</div><div class="chip">🚌교통</div><div class="chip">📚문구</div>
+  </div>
+  <div class="fl">구매 시간 (자동 기록)</div>
+  <div class="fi" style="color:#999;">오늘 밤 11:24 ← 자동</div>
+
+  <!-- RFM 자동계산 박스 -->
+  <div class="auto-box">
+    <div class="auto-hdr"><span>📊 RFM 지표 — 자동 계산됩니다</span><span>DuPont 1945·Stern 1962</span></div>
+    <div class="auto-body">
+      <div class="auto-item">
+        <div class="auto-icon" style="background:#ECFEFF;">🌙</div>
+        <div class="auto-text"><div class="at" style="color:#0891B2;">R · 야간 구매 감지</div><div class="as">밤 10시 이후면 자동 태그</div></div>
+        <div class="auto-badge">자동</div>
+      </div>
+      <div class="auto-item">
+        <div class="auto-icon" style="background:#EDE9FE;">🔄</div>
+        <div class="auto-text"><div class="at" style="color:#7C3AED;">F · 7일 내 반복 감지</div><div class="as">같은 카테고리 재구매 자동 확인</div></div>
+        <div class="auto-badge">자동</div>
+      </div>
+      <div class="auto-item">
+        <div class="auto-icon" style="background:#D1FAE5;">💰</div>
+        <div class="auto-text"><div class="at" style="color:#059669;">M · 예산·비필수 계산</div><div class="as">금액+카테고리로 자동 계산</div></div>
+        <div class="auto-badge">자동</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="position:relative;">
+    <div class="sbtn">🤖 AI에게 기록 보내기</div>
+    <div class="hs" style="inset:0 8px;border-color:#FF6B35;border-radius:9px;"></div>
+    <div class="hs-lbl" style="bottom:-13px;left:50%;transform:translateX(-50%);background:#FF6B35;color:white;">탭 → 기록완료팝업</div>
+  </div>
+  <div class="sbadge">소비 기록</div>
+</div>
+
+<!-- 카테고리 모달 -->
+<div class="phone" style="left:1360px;top:840px;width:220px;">
+  <div class="phone-label"><span class="sn">5A</span>카테고리 모달</div>
+  <div class="phone-notch"></div>
+  <div class="st"><span>9:41</span><span>🔋</span></div>
+  <div style="height:160px;background:#F5F3EF;display:flex;align-items:center;justify-content:center;"><span style="font-size:10px;color:#BBB;">배경</span></div>
+  <div style="background:white;border-radius:14px 14px 0 0;padding:12px;">
+    <div style="width:32px;height:3px;background:#E5E7EB;border-radius:100px;margin:0 auto 9px;"></div>
+    <div style="font-size:11px;font-weight:900;margin-bottom:9px;">카테고리</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:9px;">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;background:#EFF6FF;border:1.5px solid #2F6FED;border-radius:7px;padding:6px 3px;"><div style="font-size:14px;">🍕</div><div style="font-size:6px;font-weight:700;color:#2F6FED;">외식</div></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;background:#F5F3EF;border:1px solid #E5E7EB;border-radius:7px;padding:6px 3px;"><div style="font-size:14px;">🍔</div><div style="font-size:6px;color:#666;">식비</div></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;background:#F5F3EF;border:1px solid #E5E7EB;border-radius:7px;padding:6px 3px;"><div style="font-size:14px;">🎮</div><div style="font-size:6px;color:#666;">오락</div></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;background:#F5F3EF;border:1px solid #E5E7EB;border-radius:7px;padding:6px 3px;"><div style="font-size:14px;">🚌</div><div style="font-size:6px;color:#666;">교통</div></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;background:#F5F3EF;border:1px solid #E5E7EB;border-radius:7px;padding:6px 3px;"><div style="font-size:14px;">📚</div><div style="font-size:6px;color:#666;">문구</div></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;background:#F5F3EF;border:1px solid #E5E7EB;border-radius:7px;padding:6px 3px;"><div style="font-size:14px;">👗</div><div style="font-size:6px;color:#666;">쇼핑</div></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;background:#F5F3EF;border:1px solid #E5E7EB;border-radius:7px;padding:6px 3px;"><div style="font-size:14px;">☕</div><div style="font-size:6px;color:#666;">카페</div></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;background:#F5F3EF;border:1px solid #E5E7EB;border-radius:7px;padding:6px 3px;"><div style="font-size:14px;">+</div><div style="font-size:6px;color:#666;">기타</div></div>
+    </div>
+    <div style="background:#2F6FED;color:white;border-radius:8px;padding:8px;text-align:center;font-size:9px;font-weight:700;">선택 완료</div>
+  </div>
+  <div class="sbadge">카테고리 모달</div>
+</div>
+
+<!-- 기록 완료 팝업 -->
+<div class="phone" style="left:1640px;top:840px;width:220px;">
+  <div class="phone-label"><span class="sn">5B</span>기록 완료 팝업</div>
+  <div class="phone-notch"></div>
+  <div class="st"><span>9:41</span><span>🔋</span></div>
+  <div style="height:140px;background:#F5F3EF;display:flex;align-items:center;justify-content:center;"><span style="font-size:10px;color:#BBB;">배경</span></div>
+  <div style="background:white;border-radius:14px 14px 0 0;padding:12px;text-align:center;">
+    <div style="width:32px;height:3px;background:#E5E7EB;border-radius:100px;margin:0 auto 9px;"></div>
+    <div style="font-size:28px;margin-bottom:7px;">✅</div>
+    <div style="font-size:12px;font-weight:900;margin-bottom:3px;">기록 완료!</div>
+    <div style="font-size:7px;color:#666;margin-bottom:12px;">RFM 지표 자동 계산 중...</div>
+    <!-- RFM 계산 결과 미리보기 -->
+    <div style="background:#ECFEFF;border:1px solid #BAE6FD;border-radius:8px;padding:8px;margin-bottom:10px;text-align:left;">
+      <div style="font-size:8px;font-weight:700;color:#0E4F6B;margin-bottom:5px;">📊 자동 계산된 RFM 지표</div>
+      <div style="font-size:7px;color:#0891B2;margin-bottom:2px;">🌙 R · 야간 구매 감지 (밤 11:24)</div>
+      <div style="font-size:7px;color:#7C3AED;margin-bottom:2px;">🔄 F · 외식 이번 주 3번째 재구매</div>
+      <div style="font-size:7px;color:#DC2626;">💸 M · 비필수 소비 68% (위험 수준)</div>
+    </div>
+    <div style="position:relative;margin-bottom:6px;">
+      <div style="background:#FF6B35;color:white;border-radius:8px;padding:7px;font-size:8px;font-weight:700;">AI 분석 결과 보기</div>
+      <div class="hs" style="inset:0;border-color:#FF6B35;border-radius:8px;"></div>
+      <div class="hs-lbl" style="bottom:-12px;left:50%;transform:translateX(-50%);background:#FF6B35;color:white;">탭 → AI분석 결과</div>
+    </div>
+    <div style="font-size:7px;color:#2F6FED;font-weight:600;cursor:pointer;">나중에 보기 (홈으로)</div>
+  </div>
+  <div class="sbadge">기록완료 팝업</div>
+</div>
+
+<!-- ⑤ AI 분석 결과 -->
+<div class="phone" style="left:1080px;top:1640px;width:220px;">
+  <div class="phone-label"><span class="sn">6</span>AI 분석 결과</div>
+  <div class="phone-notch"></div>
+  <div class="st"><span>9:41</span><span>🔋</span></div>
+  <div class="tnav">
+    <div style="position:relative;"><div style="font-size:14px;border:1.5px dashed #888;border-radius:4px;padding:2px 5px;">←</div><div class="hs-lbl" style="bottom:-12px;left:0;background:#888;color:white;">탭→홈</div></div>
+    <div class="tnav-title">AI 분석</div>
+    <div style="font-size:8px;color:#2F6FED;font-weight:700;">공유</div>
+  </div>
+  <!-- RFM 4개 결과 카드 -->
+  <div class="rfm-result-grid">
+    <div class="rfm-res-card r"><div class="rrc-lbl r">R · 야간 구매</div><div class="rrc-val r">42%</div><div class="rrc-st" style="color:#DC2626;">⚠️ 주의</div></div>
+    <div class="rfm-res-card f"><div class="rrc-lbl f">F · 반복 구매</div><div class="rrc-val f">3회</div><div class="rrc-st" style="color:#DC2626;">⚠️ 주의</div></div>
+    <div class="rfm-res-card m1"><div class="rrc-lbl m">M · 예산 사용</div><div class="rrc-val m">62%</div><div class="rrc-st" style="color:#16A34A;">✅ 양호</div></div>
+    <div class="rfm-res-card m2"><div class="rrc-lbl y">M · 비필수 소비</div><div class="rrc-val y">68%</div><div class="rrc-st" style="color:#DC2626;">🔴 높음</div></div>
+  </div>
+  <div style="position:relative;">
+    <div class="aicard"><div class="aih"><div class="aiav">🤖</div><div class="ainm">AI 분석</div></div><div class="aimsg">야간 <strong>42%</strong>, 오락·외식 <strong>68%</strong>! 밤 구매 줄이면 지출 확 줄어들 거야 🌙</div></div>
+    <div class="hs" style="inset:0 8px;border-color:#2F6FED;border-radius:10px;"></div>
+    <div class="hs-lbl" style="bottom:-2px;right:12px;background:#2F6FED;color:white;">탭→챗봇 질문</div>
+  </div>
+  <div class="ilist">
+    <div class="ins"><div class="idot" style="background:#0891B2;"></div><div class="itext">야간 구매 비율 <b>42%</b> — 밤 10시 이후 5건</div></div>
+    <div class="ins"><div class="idot" style="background:#7C3AED;"></div><div class="itext">외식 7일 내 <b>3회</b> 반복 구매</div></div>
+    <div class="ins"><div class="idot" style="background:#DC2626;"></div><div class="itext">23일쯤 용돈 바닥 예상 💸</div></div>
+    <div class="ins"><div class="idot" style="background:#16A34A;"></div><div class="itext">교통비 정상 범위 유지 👍</div></div>
+  </div>
+  <div class="bnav">
+    <div class="bni" style="position:relative;border:1.5px dashed #FF6B35;border-radius:5px;padding:2px 4px;"><div class="bni-i">🏠</div>홈<div class="hs-lbl" style="bottom:-13px;left:50%;transform:translateX(-50%);background:#FF6B35;color:white;">탭→홈</div></div>
+    <div class="bni" style="position:relative;border:1.5px dashed #FF6B35;border-radius:5px;padding:2px 4px;"><div class="bni-i">➕</div>기록<div class="hs-lbl" style="bottom:-13px;left:50%;transform:translateX(-50%);background:#FF6B35;color:white;">탭→소비기록</div></div>
+    <div class="bni" style="position:relative;border:1.5px dashed #2F6FED;border-radius:5px;padding:2px 4px;"><div class="bni-i">💬</div>AI질문<div class="hs-lbl" style="bottom:-13px;left:50%;transform:translateX(-50%);background:#2F6FED;color:white;">탭→챗봇</div></div>
+    <div class="bni on" style="padding:2px 4px;"><div class="bni-i">📊</div>리포트</div>
+  </div>
+  <div class="sbadge">AI 분석 결과</div>
+</div>
+
+<!-- AI 챗봇 -->
+<div class="phone" style="left:1360px;top:1640px;width:220px;">
+  <div class="phone-label"><span class="sn">7</span>AI 챗봇</div>
+  <div class="phone-notch"></div>
+  <div class="st"><span>9:41</span><span>🔋</span></div>
+  <div class="tnav">
+    <div style="position:relative;"><div style="font-size:14px;border:1.5px dashed #888;border-radius:4px;padding:2px 5px;">←</div><div class="hs-lbl" style="bottom:-12px;left:0;background:#888;color:white;">탭→홈</div></div>
+    <div class="tnav-title">용돈이에게 질문</div>
+    <div style="width:24px;"></div>
+  </div>
+  <div class="cwrap">
+    <div class="cbub"><div class="cav ai">🤖</div><div class="cmsg">안녕! 소비 데이터로 뭐든 분석해줄게 😊</div></div>
+    <div class="cbub u"><div class="cav me">나</div><div class="cmsg">왜 돈이 없지?</div></div>
+    <div class="cbub"><div class="cav ai">🤖</div><div class="cmsg"><span class="rfm-ctag" style="background:#ECFEFF;color:#0891B2;">🌙 R · 야간</span><br>밤 구매 <strong>42%</strong>야!<br><span class="rfm-ctag" style="background:#FEF9C3;color:#D97706;">💸 M · 비필수</span><br>오락·외식 <strong>68%</strong>야!</div></div>
+    <div class="cbub u"><div class="cav me">나</div><div class="cmsg">스킨 5천원 사도 돼?</div></div>
+    <div class="cbub"><div class="cav ai">🤖</div><div class="cmsg">잔액 <strong>38,200원</strong>이니까 OK!<br><span class="rfm-ctag" style="background:#EDE9FE;color:#7C3AED;">🔄 F · 반복</span><br>오락 이번 주 <strong>3번째</strong>야 — 반복 주의!</div></div>
+    <div class="cinput-bar"><input class="cinput-f" placeholder="뭐든 물어봐!" readonly><div class="csend">➤</div></div>
+  </div>
+  <div class="bnav" style="margin-top:-50px;">
+    <div class="bni" style="position:relative;border:1.5px dashed #FF6B35;border-radius:5px;padding:2px 4px;"><div class="bni-i">🏠</div>홈<div class="hs-lbl" style="bottom:-13px;left:50%;transform:translateX(-50%);background:#FF6B35;color:white;">탭→홈</div></div>
+    <div class="bni" style="position:relative;border:1.5px dashed #FF6B35;border-radius:5px;padding:2px 4px;"><div class="bni-i">➕</div>기록<div class="hs-lbl" style="bottom:-13px;left:50%;transform:translateX(-50%);background:#FF6B35;color:white;">탭→소비기록</div></div>
+    <div class="bni on" style="padding:2px 4px;"><div class="bni-i">💬</div>AI질문</div>
+    <div class="bni" style="position:relative;border:1.5px dashed #16A34A;border-radius:5px;padding:2px 4px;"><div class="bni-i">📊</div>리포트<div class="hs-lbl" style="bottom:-13px;left:50%;transform:translateX(-50%);background:#16A34A;color:white;">탭→마이</div></div>
+  </div>
+  <div class="sbadge">AI 챗봇</div>
+</div>
+
+<!-- ⑥ 마이페이지 -->
+<div class="phone" style="left:2640px;top:60px;width:220px;">
+  <div class="phone-label"><span class="sn">8</span>마이페이지</div>
+  <div class="phone-notch"></div>
+  <div class="st"><span>9:41</span><span>🔋</span></div>
+  <div class="tnav">
+    <div style="position:relative;"><div style="font-size:14px;border:1.5px dashed #888;border-radius:4px;padding:2px 5px;">←</div><div class="hs-lbl" style="bottom:-12px;left:0;background:#888;color:white;">탭→홈</div></div>
+    <div class="tnav-title">마이페이지</div>
+    <div style="position:relative;"><div style="font-size:14px;">⚙️</div><div class="hs" style="inset:0;border-color:#888;border-radius:4px;"></div><div class="hs-lbl" style="bottom:-12px;right:0;background:#888;color:white;">탭→설정</div></div>
+  </div>
+  <!-- 월간 리포트 -->
+  <div style="position:relative;">
+    <div class="rp-card">
+      <div class="rp-title">📊 3월 RFM 리포트</div>
+      <div class="rp-stats">
+        <div class="rp-stat"><div class="rp-stat-n" style="color:#0891B2;">42%</div><div class="rp-stat-l">야간구매(R)</div></div>
+        <div class="rp-stat"><div class="rp-stat-n" style="color:#7C3AED;">3회</div><div class="rp-stat-l">반복구매(F)</div></div>
+        <div class="rp-stat"><div class="rp-stat-n" style="color:#D97706;">68%</div><div class="rp-stat-l">비필수(M)</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:4px;margin-bottom:3px;"><div style="font-size:7px;width:24px;">🍕외식</div><div class="rp-bar-bg"><div class="rp-bar-fill" style="width:65%;background:#FF6B35;"></div></div><div style="font-size:7px;">40,000</div></div>
+      <div style="display:flex;align-items:center;gap:4px;margin-bottom:3px;"><div style="font-size:7px;width:24px;">🎮오락</div><div class="rp-bar-bg"><div class="rp-bar-fill" style="width:21%;background:#7C3AED;"></div></div><div style="font-size:7px;">13,000</div></div>
+      <div style="display:flex;align-items:center;gap:4px;"><div style="font-size:7px;width:24px;">🚌교통</div><div class="rp-bar-bg"><div class="rp-bar-fill" style="width:14%;background:#16A34A;"></div></div><div style="font-size:7px;">8,800</div></div>
+    </div>
+    <div class="hs" style="inset:0;border-color:#16A34A;border-radius:10px;"></div>
+    <div class="hs-lbl" style="bottom:-12px;right:0;background:#16A34A;color:white;">탭→월간리포트</div>
+  </div>
+  <!-- 예산 설정 -->
+  <div style="position:relative;">
+    <div class="rp-card">
+      <div class="rp-title">🎯 예산 목표 설정</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;background:#F5F3EF;border-radius:7px;padding:7px;margin-bottom:4px;"><div style="font-size:7px;color:#555;">이번 달 예산</div><div style="font-size:12px;font-weight:900;color:#2F6FED;">100,000원</div></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;background:#F5F3EF;border-radius:7px;padding:7px;"><div style="font-size:7px;color:#555;">저축 목표</div><div style="font-size:12px;font-weight:900;color:#16A34A;">20,000원</div></div>
+    </div>
+    <div class="hs" style="inset:0;border-color:#2F6FED;border-radius:10px;"></div>
+    <div class="hs-lbl" style="bottom:-12px;right:0;background:#2F6FED;color:white;">탭→예산설정 편집</div>
+  </div>
+  <div class="bnav">
+    <div class="bni" style="position:relative;border:1.5px dashed #FF6B35;border-radius:5px;padding:2px 4px;"><div class="bni-i">🏠</div>홈<div class="hs-lbl" style="bottom:-13px;left:50%;transform:translateX(-50%);background:#FF6B35;color:white;">탭→홈</div></div>
+    <div class="bni" style="position:relative;border:1.5px dashed #FF6B35;border-radius:5px;padding:2px 4px;"><div class="bni-i">➕</div>기록<div class="hs-lbl" style="bottom:-13px;left:50%;transform:translateX(-50%);background:#FF6B35;color:white;">탭→소비기록</div></div>
+    <div class="bni" style="position:relative;border:1.5px dashed #2F6FED;border-radius:5px;padding:2px 4px;"><div class="bni-i">💬</div>AI질문<div class="hs-lbl" style="bottom:-13px;left:50%;transform:translateX(-50%);background:#2F6FED;color:white;">탭→챗봇</div></div>
+    <div class="bni on" style="padding:2px 4px;"><div class="bni-i">📊</div>리포트</div>
+  </div>
+  <div class="sbadge">마이페이지</div>
+</div>
+
+<!-- 마이 서브 화면들 -->
+<!-- 8A 월간 리포트 -->
+<div class="phone" style="left:2920px;top:60px;width:220px;">
+  <div class="phone-label"><span class="sn">8A</span>월간 RFM 리포트</div>
+  <div class="phone-notch"></div>
+  <div class="st"><span>9:41</span><span>🔋</span></div>
+  <div class="tnav"><div style="font-size:14px;border:1.5px dashed #888;border-radius:4px;padding:2px 5px;">←</div><div class="tnav-title">3월 리포트</div><div style="font-size:8px;color:#2F6FED;font-weight:700;">공유</div></div>
+  <div style="padding:8px;">
+    <div style="background:white;border-radius:10px;padding:10px;margin-bottom:7px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+      <div style="font-size:9px;font-weight:700;margin-bottom:7px;">📈 RFM 월간 추이</div>
+      <div style="display:flex;align-items:flex-end;gap:8px;height:50px;margin-bottom:4px;">
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;"><div style="flex:1;background:#E5E7EB;border-radius:2px;width:100%;display:flex;align-items:flex-end;"><div style="background:#0891B2;border-radius:2px;width:100%;height:55%;"></div></div><div style="font-size:6px;color:#999;">1월</div></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;"><div style="flex:1;background:#E5E7EB;border-radius:2px;width:100%;display:flex;align-items:flex-end;"><div style="background:#0891B2;border-radius:2px;width:100%;height:70%;"></div></div><div style="font-size:6px;color:#999;">2월</div></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;"><div style="flex:1;background:#E5E7EB;border-radius:2px;width:100%;display:flex;align-items:flex-end;"><div style="background:#FF6B35;border-radius:2px;width:100%;height:42%;"></div></div><div style="font-size:6px;color:#2F6FED;font-weight:700;">3월</div></div>
+      </div>
+      <div style="font-size:7px;color:#0891B2;text-align:center;">야간구매 비율 개선 중! 📉</div>
+    </div>
+    <div style="background:#ECFEFF;border:1px solid #BAE6FD;border-radius:10px;padding:10px;margin-bottom:7px;">
+      <div style="font-size:8px;font-weight:700;color:#0E4F6B;margin-bottom:7px;">🔬 이번 달 RFM 상세</div>
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;"><div style="font-size:8px;width:60px;color:#0891B2;font-weight:600;">R·야간</div><div style="flex:1;background:#BAE6FD;border-radius:100px;height:6px;"><div style="width:42%;background:#0891B2;height:100%;border-radius:100px;"></div></div><div style="font-size:8px;font-weight:700;color:#0891B2;">42%</div></div>
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;"><div style="font-size:8px;width:60px;color:#7C3AED;font-weight:600;">F·반복</div><div style="flex:1;background:#C4B5FD;border-radius:100px;height:6px;"><div style="width:60%;background:#7C3AED;height:100%;border-radius:100px;"></div></div><div style="font-size:8px;font-weight:700;color:#7C3AED;">3회</div></div>
+      <div style="display:flex;align-items:center;gap:6px;"><div style="font-size:8px;width:60px;color:#D97706;font-weight:600;">M·비필수</div><div style="flex:1;background:#FDE68A;border-radius:100px;height:6px;"><div style="width:68%;background:#D97706;height:100%;border-radius:100px;"></div></div><div style="font-size:8px;font-weight:700;color:#D97706;">68%</div></div>
+    </div>
+    <div class="aicard"><div class="aih"><div class="aiav">🤖</div><div class="ainm">AI 총평</div></div><div class="aimsg">야식 줄인 게 효과 있어! <strong>다음 달 목표</strong>: 야간 구매 30% 이하!</div></div>
+  </div>
+  <div class="sbadge">월간 리포트</div>
+</div>
+
+<!-- 8B 예산 설정 편집 -->
+<div class="phone" style="left:3200px;top:60px;width:220px;">
+  <div class="phone-label"><span class="sn">8B</span>예산 설정 편집</div>
+  <div class="phone-notch"></div>
+  <div class="st"><span>9:41</span><span>🔋</span></div>
+  <div class="tnav"><div style="font-size:14px;border:1.5px dashed #888;border-radius:4px;padding:2px 5px;">←</div><div class="tnav-title">예산 설정</div><div style="font-size:8px;color:#2F6FED;font-weight:700;cursor:pointer;">저장</div></div>
+  <div style="padding:10px 12px;">
+    <div style="margin-bottom:7px;"><div style="font-size:7px;font-weight:700;color:#999;margin-bottom:2px;">이번 달 용돈 (예산)</div><div class="fi foc" style="margin:0;">100,000원</div></div>
+    <div style="margin-bottom:7px;"><div style="font-size:7px;font-weight:700;color:#999;margin-bottom:2px;">저축 목표</div><div class="fi" style="margin:0;">20,000원</div></div>
+    <div style="margin-bottom:10px;"><div style="font-size:7px;font-weight:700;color:#999;margin-bottom:5px;">카테고리별 한도 (선택)</div>
+      <div style="background:#F5F3EF;border-radius:8px;padding:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;"><span style="font-size:7px;">🍕 외식</span><div class="fi" style="width:70px;padding:4px 7px;font-size:8px;margin:0;">30,000원</div></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;"><span style="font-size:7px;">🎮 오락</span><div class="fi" style="width:70px;padding:4px 7px;font-size:8px;margin:0;">15,000원</div></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:7px;">🚌 교통</span><div class="fi" style="width:70px;padding:4px 7px;font-size:8px;margin:0;">10,000원</div></div>
+      </div>
+    </div>
+    <div style="position:relative;">
+      <div style="background:#2F6FED;color:white;border-radius:8px;padding:9px;font-size:9px;font-weight:700;text-align:center;">저장하기</div>
+      <div class="hs" style="inset:0;border-color:#2F6FED;border-radius:8px;"></div>
+      <div class="hs-lbl" style="bottom:-12px;left:50%;transform:translateX(-50%);background:#2F6FED;color:white;">탭→마이페이지</div>
+    </div>
+  </div>
+  <div class="sbadge">예산 설정</div>
+</div>
+
+<!-- 8C 설정 -->
+<div class="phone" style="left:3480px;top:60px;width:220px;">
+  <div class="phone-label"><span class="sn">8C</span>설정</div>
+  <div class="phone-notch"></div>
+  <div class="st"><span>9:41</span><span>🔋</span></div>
+  <div class="tnav"><div style="font-size:14px;border:1.5px dashed #888;border-radius:4px;padding:2px 5px;">←</div><div class="tnav-title">설정</div><div style="width:24px;"></div></div>
+  <div style="padding:8px;">
+    <div class="set-group">
+      <div class="set-group-title">RFM 알림 설정</div>
+      <div class="set-row"><span class="set-lbl">야간 구매 감지 알림</span><div class="set-tog"><div class="set-togd"></div></div></div>
+      <div class="set-row"><span class="set-lbl">반복 구매 경고</span><div class="set-tog"><div class="set-togd"></div></div></div>
+      <div class="set-row"><span class="set-lbl">예산 초과 경보</span><div class="set-tog"><div class="set-togd"></div></div></div>
+      <div class="set-row"><span class="set-lbl">주간 리포트</span><div class="set-tog" style="background:#E5E7EB;"><div class="set-togd" style="right:auto;left:2px;"></div></div></div>
+    </div>
+    <div class="set-group">
+      <div class="set-group-title">계정</div>
+      <div class="set-row"><span class="set-lbl">프로필 수정</span><span class="set-arrow">›</span></div>
+      <div class="set-row"><span class="set-lbl" style="color:#DC2626;">로그아웃</span><span class="set-arrow">›</span></div>
+    </div>
+  </div>
+  <div class="sbadge">설정</div>
+</div>
+
+<!-- ARROWS -->
+<svg style="position:absolute;top:0;left:0;pointer-events:none;overflow:visible;" width="3700" height="2200">
+  <defs>
+    <marker id="ao" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#FF6B35"/></marker>
+    <marker id="ab" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#2F6FED"/></marker>
+    <marker id="ag" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#16A34A"/></marker>
+    <marker id="agr" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#888"/></marker>
+  </defs>
+
+  <!-- 온보딩 플로우 -->
+  <path d="M280 330 C 310 330 320 330 340 330" stroke="#FF6B35" stroke-width="2" fill="none" marker-end="url(#ao)"/>
+  <path d="M280 360 C 320 400 560 430 620 400" stroke="#16A34A" stroke-width="1.5" fill="none" stroke-dasharray="5,3" marker-end="url(#ag)"/>
+  <path d="M840 320 C 880 280 1060 220 1180 200" stroke="#FF6B35" stroke-width="2.5" fill="none" marker-end="url(#ao)"/>
+  <path d="M1120 370 C 1140 340 1160 280 1180 260" stroke="#FF6B35" stroke-width="2" fill="none" marker-end="url(#ao)"/>
+
+  <!-- 홈→소비기록 -->
+  <path d="M1250 650 C 1200 720 1160 780 1130 840" stroke="#FF6B35" stroke-width="2.5" fill="none" marker-end="url(#ao)"/>
+  <rect x="1130" y="740" width="68" height="13" rx="6" fill="#FF6B35"/>
+  <text x="1164" y="750" text-anchor="middle" font-size="7" fill="white" font-weight="700" font-family="Noto Sans KR,sans-serif">➕탭→소비기록</text>
+
+  <!-- 홈→마이페이지 -->
+  <path d="M1390 640 C 1800 580 2400 360 2640 380" stroke="#16A34A" stroke-width="2" fill="none" marker-end="url(#ag)"/>
+
+  <!-- 홈→챗봇 -->
+  <path d="M1340 650 C 1350 700 1350 1600 1360 1640" stroke="#2F6FED" stroke-width="1.5" fill="none" stroke-dasharray="5,3" marker-end="url(#ab)"/>
+
+  <!-- 홈 RFM카드→AI분석 -->
+  <path d="M1180 1640 C 1160 1500 1180 1300 1200 1200" stroke="#2F6FED" stroke-width="2" fill="none" stroke-dasharray="5,3" marker-end="url(#ab)"/>
+
+  <!-- 소비기록→기록완료팝업 -->
+  <path d="M1300 1400 C 1420 1380 1560 1340 1640 1300" stroke="#FF6B35" stroke-width="2.5" fill="none" marker-end="url(#ao)"/>
+  <rect x="1420" y="1360" width="62" height="13" rx="6" fill="#FF6B35"/>
+  <text x="1451" y="1370" text-anchor="middle" font-size="7" fill="white" font-weight="700" font-family="Noto Sans KR,sans-serif">제출→완료팝업</text>
+
+  <!-- 기록완료팝업→AI분석 -->
+  <path d="M1750 1480 C 1800 1600 1700 1800 1580 1800 C 1460 1800 1260 1800 1200 1760" stroke="#FF6B35" stroke-width="2.5" fill="none" marker-end="url(#ao)"/>
+  <rect x="1560" y="1788" width="62" height="13" rx="6" fill="#FF6B35"/>
+  <text x="1591" y="1798" text-anchor="middle" font-size="7" fill="white" font-weight="700" font-family="Noto Sans KR,sans-serif">팝업→AI분석</text>
+
+  <!-- AI분석→챗봇 -->
+  <path d="M1300 2020 C 1330 2010 1340 1990 1360 1980" stroke="#2F6FED" stroke-width="2" fill="none" marker-end="url(#ab)"/>
+
+  <!-- 마이→서브화면들 -->
+  <path d="M2860 300 C 2890 280 2910 260 2920 260" stroke="#16A34A" stroke-width="2" fill="none" marker-end="url(#ag)"/>
+  <path d="M2860 420 C 2940 400 3100 360 3200 320" stroke="#2F6FED" stroke-width="2" fill="none" marker-end="url(#ab)"/>
+  <path d="M2820 180 C 2940 150 3340 140 3480 180" stroke="#888" stroke-width="1.5" fill="none" stroke-dasharray="4,3" marker-end="url(#agr)"/>
+</svg>
+
+<!-- 화면 목록 박스 -->
+<div style="position:absolute;left:60px;top:750px;background:white;border:1px solid #E5E2DC;border-radius:12px;padding:14px 18px;width:280px;">
+  <div style="font-size:11px;font-weight:900;margin-bottom:8px;">📋 전체 화면 목록 (13개)</div>
+  <div style="font-size:8px;line-height:2.2;color:#444;">
+    0. 스플래시  1. 로그인  2. 회원가입<br>
+    3. 온보딩(예산설정)<br>
+    4. 홈(메인) + 4A. 알림<br>
+    5. 소비기록 + 5A. 카테고리모달 + 5B. 완료팝업<br>
+    6. AI 분석 결과<br>
+    7. AI 챗봇<br>
+    8. 마이 + 8A. 월간리포트 + 8B. 예산설정 + 8C. 설정
+  </div>
+  <div style="margin-top:8px;padding-top:8px;border-top:1px solid #F0EFED;font-size:8px;color:#0891B2;font-weight:700;">📊 RFM 자동계산: DuPont(1945) · Stern(1962)<br>R·F·M 모두 소비 기록에서 자동 계산</div>
+</div>
+
+</div>
+</body>
+</html>

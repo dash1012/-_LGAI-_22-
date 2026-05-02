@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>용돈 AI — UI 목업 v3 (RFM 기반)</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --primary: #2F6FED; --primary-light: #E8F0FE; --primary-dark: #1A4DB8;
+  --accent: #FF6B35; --green: #16A34A; --yellow: #D97706; --red: #DC2626;
+  --rfm-r: #0891B2; --rfm-f: #7C3AED; --rfm-m: #059669;
+  --rfm-r-light: #ECFEFF; --rfm-f-light: #EDE9FE; --rfm-m-light: #D1FAE5;
+  --bg: #F5F7FF; --card: #FFFFFF; --text: #1A1A2E; --sub: #6B7280; --border: #E5E7EB;
+  --phone-w: 375px; --phone-h: 812px;
+}
+body { font-family: 'Noto Sans KR', sans-serif; background: #0F1729; color: var(--text); min-height: 100vh; padding: 40px 20px 80px; }
+
+.page-header { text-align: center; margin-bottom: 40px; }
+.page-header .badge { display: inline-block; background: rgba(47,111,237,0.2); color: #7EB0FF; font-size: 12px; font-weight: 700; letter-spacing: 0.15em; padding: 6px 16px; border-radius: 100px; margin-bottom: 16px; border: 1px solid rgba(47,111,237,0.3); }
+.page-header h1 { color: #FFFFFF; font-size: 28px; font-weight: 900; letter-spacing: -0.03em; margin-bottom: 8px; }
+.page-header p { color: #8899BB; font-size: 13px; line-height: 1.7; }
+
+/* RFM 설명 바 */
+.rfm-bar { max-width: 900px; margin: 0 auto 40px; background: rgba(8,145,178,0.1); border: 1px solid rgba(8,145,178,0.3); border-radius: 14px; padding: 16px 20px; }
+.rfm-bar-title { font-size: 12px; font-weight: 700; color: #67E8F9; margin-bottom: 10px; }
+.rfm-items { display: flex; gap: 16px; flex-wrap: wrap; }
+.rfm-item { display: flex; align-items: center; gap: 8px; }
+.rfm-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.rfm-text { font-size: 12px; color: #A5F3FC; line-height: 1.5; }
+.rfm-text strong { color: white; }
+
+.screens-row { display: flex; gap: 40px; justify-content: center; align-items: flex-start; flex-wrap: wrap; }
+.screen-wrap { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+.screen-label { display: flex; align-items: center; gap: 10px; }
+.screen-label .num { width: 32px; height: 32px; background: var(--primary); color: white; font-size: 14px; font-weight: 700; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.screen-label .title { color: #E0E8FF; font-size: 15px; font-weight: 700; }
+.screen-label .sub { color: #8899BB; font-size: 12px; }
+
+.phone { width: var(--phone-w); height: var(--phone-h); background: var(--bg); border-radius: 44px; overflow: hidden; position: relative; box-shadow: 0 0 0 10px #1A2540, 0 0 0 12px #252F4A, 0 40px 80px rgba(0,0,0,0.6); }
+.phone::before { content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 120px; height: 30px; background: #1A2540; border-radius: 0 0 20px 20px; z-index: 99; }
+.phone-inner { width: 100%; height: 100%; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; }
+.phone-inner::-webkit-scrollbar { display: none; }
+
+.status-bar { display: flex; justify-content: space-between; align-items: center; padding: 36px 24px 8px; font-size: 12px; font-weight: 700; color: var(--text); }
+.top-nav { display: flex; align-items: center; justify-content: space-between; padding: 8px 20px 16px; }
+.top-nav .nav-title { font-size: 20px; font-weight: 900; color: var(--text); letter-spacing: -0.03em; }
+.top-nav .nav-icon { width: 40px; height: 40px; background: var(--primary-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+
+.card { background: var(--card); border-radius: 20px; margin: 0 16px 14px; padding: 18px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+.card-label { font-size: 11px; font-weight: 700; color: var(--sub); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; }
+
+.budget-card { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); border-radius: 24px; margin: 0 16px 16px; padding: 22px; color: white; position: relative; overflow: hidden; }
+.budget-card::after { content: ''; position: absolute; top: -40px; right: -40px; width: 150px; height: 150px; background: rgba(255,255,255,0.08); border-radius: 50%; }
+.bc-label { font-size: 11px; opacity: 0.7; font-weight: 500; margin-bottom: 6px; }
+.bc-amount { font-size: 34px; font-weight: 900; letter-spacing: -0.04em; margin-bottom: 16px; }
+.bc-amount span { font-size: 18px; font-weight: 500; opacity: 0.8; }
+.progress-bar { background: rgba(255,255,255,0.2); border-radius: 100px; height: 8px; margin-bottom: 8px; }
+.progress-fill { height: 100%; border-radius: 100px; background: white; }
+.bc-meta { display: flex; justify-content: space-between; font-size: 12px; opacity: 0.8; }
+
+/* RFM 지표 카드 - 홈화면 */
+.rfm-mini-card { background: var(--card); border-radius: 20px; margin: 0 16px 14px; padding: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+.rfm-mini-title { font-size: 12px; font-weight: 700; color: var(--sub); margin-bottom: 12px; }
+.rfm-mini-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.rfm-mini-item { border-radius: 12px; padding: 12px; }
+.rfm-mini-item.r { background: var(--rfm-r-light); border: 1px solid #BAE6FD; }
+.rfm-mini-item.f { background: var(--rfm-f-light); border: 1px solid #C4B5FD; }
+.rfm-mini-item.m1 { background: var(--rfm-m-light); border: 1px solid #A7F3D0; }
+.rfm-mini-item.m2 { background: #FEF9C3; border: 1px solid #FDE68A; }
+.rfm-mini-tag { font-size: 9px; font-weight: 700; margin-bottom: 4px; }
+.rfm-mini-tag.r { color: var(--rfm-r); }
+.rfm-mini-tag.f { color: var(--rfm-f); }
+.rfm-mini-tag.m { color: var(--rfm-m); }
+.rfm-mini-tag.y { color: var(--yellow); }
+.rfm-mini-val { font-size: 20px; font-weight: 900; margin-bottom: 2px; }
+.rfm-mini-val.r { color: var(--rfm-r); }
+.rfm-mini-val.f { color: var(--rfm-f); }
+.rfm-mini-val.m { color: var(--rfm-m); }
+.rfm-mini-val.y { color: var(--yellow); }
+.rfm-mini-desc { font-size: 10px; color: var(--sub); }
+
+.ai-card { background: linear-gradient(135deg, #FFF8F0, #FFF0E8); border: 1.5px solid #FFD0B5; border-radius: 20px; margin: 0 16px 14px; padding: 16px; }
+.ai-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.ai-avatar { width: 36px; height: 36px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+.ai-name { font-size: 13px; font-weight: 700; color: #C0440A; }
+.ai-badge { font-size: 10px; background: var(--accent); color: white; padding: 2px 8px; border-radius: 100px; font-weight: 700; }
+.ai-bubble { background: white; border-radius: 4px 16px 16px 16px; padding: 12px 14px; font-size: 13px; line-height: 1.65; color: var(--text); box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+.ai-bubble strong { color: var(--accent); }
+
+.section-title { font-size: 13px; font-weight: 700; color: var(--text); padding: 4px 20px 10px; }
+
+.tx-item { display: flex; align-items: center; gap: 12px; padding: 12px 20px; border-bottom: 1px solid var(--border); }
+.tx-item:last-child { border-bottom: none; }
+.tx-icon { width: 42px; height: 42px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+.tx-info { flex: 1; }
+.tx-name { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+.tx-meta { font-size: 11px; color: var(--sub); }
+.tx-right { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+.tx-amount { font-size: 15px; font-weight: 700; color: var(--text); }
+.rfm-tag { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 100px; }
+.rfm-tag.night { background: #EDE9FE; color: #7C3AED; }
+.rfm-tag.repeat { background: #ECFEFF; color: #0891B2; }
+.rfm-tag.over { background: #FEE2E2; color: #DC2626; }
+.rfm-tag.normal { background: #DCFCE7; color: #16A34A; }
+
+.bottom-nav { position: sticky; bottom: 0; background: white; border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 10px 0 24px; }
+.bn-item { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; color: var(--sub); }
+.bn-item.active { color: var(--primary); }
+.bn-item .bn-icon { font-size: 22px; }
+
+/* 소비기록 화면 - 입력 */
+.form-field { margin: 0 16px 12px; }
+.form-field label { display: block; font-size: 11px; font-weight: 700; color: var(--sub); letter-spacing: 0.08em; margin-bottom: 6px; }
+.form-input { width: 100%; background: var(--card); border: 1.5px solid var(--border); border-radius: 14px; padding: 14px 16px; font-size: 15px; font-weight: 600; font-family: 'Noto Sans KR', sans-serif; color: var(--text); outline: none; }
+.form-input.focused { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(47,111,237,0.12); }
+.amount-input { font-size: 28px; font-weight: 900; letter-spacing: -0.03em; }
+.chip-row { display: flex; gap: 8px; flex-wrap: wrap; padding: 0 16px 12px; }
+.chip { padding: 6px 14px; border-radius: 100px; font-size: 12px; font-weight: 600; border: 1.5px solid var(--border); color: var(--sub); background: white; }
+.chip.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+/* 자동계산 안내 박스 */
+.auto-calc-box { margin: 0 16px 14px; background: #ECFEFF; border: 1.5px solid #BAE6FD; border-radius: 16px; overflow: hidden; }
+.auto-calc-header { background: var(--rfm-r); padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; }
+.auto-calc-header span { font-size: 12px; font-weight: 700; color: white; }
+.auto-calc-header .cite { font-size: 10px; color: rgba(255,255,255,0.75); }
+.auto-calc-body { padding: 12px 14px; }
+.auto-calc-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.auto-calc-item:last-child { margin-bottom: 0; }
+.ac-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+.ac-text { flex: 1; }
+.ac-title { font-size: 12px; font-weight: 700; margin-bottom: 2px; }
+.ac-desc { font-size: 10px; color: var(--sub); line-height: 1.4; }
+.ac-auto-badge { font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 100px; background: #16A34A; color: white; flex-shrink: 0; }
+
+.submit-btn { margin: 4px 16px 20px; width: calc(100% - 32px); background: var(--primary); color: white; border: none; border-radius: 16px; padding: 16px; font-size: 15px; font-weight: 700; font-family: 'Noto Sans KR', sans-serif; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+
+/* AI 분석 결과 */
+.rfm-score-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0 16px 14px; }
+.rfm-score-card { border-radius: 16px; padding: 14px; }
+.rfm-score-card.r { background: var(--rfm-r-light); border: 1.5px solid #BAE6FD; }
+.rfm-score-card.f { background: var(--rfm-f-light); border: 1.5px solid #C4B5FD; }
+.rfm-score-card.m1 { background: var(--rfm-m-light); border: 1.5px solid #A7F3D0; }
+.rfm-score-card.m2 { background: #FEF9C3; border: 1.5px solid #FDE68A; }
+.rsc-label { font-size: 10px; font-weight: 700; margin-bottom: 6px; }
+.rsc-label.r { color: var(--rfm-r); }
+.rsc-label.f { color: var(--rfm-f); }
+.rsc-label.m { color: var(--rfm-m); }
+.rsc-label.y { color: var(--yellow); }
+.rsc-val { font-size: 28px; font-weight: 900; margin-bottom: 4px; }
+.rsc-val.r { color: var(--rfm-r); }
+.rsc-val.f { color: var(--rfm-f); }
+.rsc-val.m { color: var(--rfm-m); }
+.rsc-val.y { color: var(--yellow); }
+.rsc-bar { background: rgba(0,0,0,0.08); border-radius: 100px; height: 5px; margin-bottom: 4px; }
+.rsc-bar-fill { height: 100%; border-radius: 100px; }
+.rsc-status { font-size: 10px; font-weight: 700; }
+.rsc-cite { font-size: 9px; color: var(--sub); margin-top: 2px; }
+
+.insight-item { display: flex; gap: 12px; align-items: flex-start; padding: 0 20px; margin-bottom: 12px; }
+.insight-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+.insight-text { font-size: 13px; line-height: 1.6; color: var(--text); }
+
+/* 챗봇 */
+.chat-wrap { padding: 0 16px 100px; }
+.chat-bubble { display: flex; gap: 10px; margin-bottom: 14px; align-items: flex-start; }
+.chat-bubble.user { flex-direction: row-reverse; }
+.chat-av { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+.chat-av.ai { background: var(--accent); }
+.chat-av.me { background: var(--primary); color: white; font-size: 13px; font-weight: 700; }
+.chat-msg { max-width: 75%; background: white; border-radius: 4px 16px 16px 16px; padding: 10px 14px; font-size: 13px; line-height: 1.6; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+.chat-bubble.user .chat-msg { background: var(--primary); color: white; border-radius: 16px 4px 16px 16px; }
+.rfm-inline-tag { display: inline-block; border-radius: 100px; font-size: 10px; font-weight: 700; padding: 1px 7px; margin-bottom: 3px; }
+.chat-input-bar { display: flex; gap: 10px; margin-top: 10px; }
+.chat-input { flex: 1; background: white; border: 1.5px solid var(--border); border-radius: 100px; padding: 12px 18px; font-size: 13px; font-family: 'Noto Sans KR', sans-serif; outline: none; }
+.chat-send { width: 44px; height: 44px; background: var(--primary); border: none; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; color: white; }
+
+.screen-arrow { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding-top: 80px; color: #8899BB; }
+.screen-arrow .arrow-icon { font-size: 32px; }
+.screen-arrow .arrow-text { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+
+.annotation-wrap { position: relative; }
+.annot { position: absolute; background: #FFE066; color: #1A1A2E; font-size: 11px; font-weight: 700; padding: 5px 10px; border-radius: 8px; white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,0.15); z-index: 10; }
+.annot.right::after { content: ''; position: absolute; right: -8px; top: 50%; transform: translateY(-50%); border: 5px solid transparent; border-left-color: #FFE066; }
+.annot.left::after { content: ''; position: absolute; left: -8px; top: 50%; transform: translateY(-50%); border: 5px solid transparent; border-right-color: #FFE066; }
+.annot.rfm { background: #BAE6FD; color: #0E4F6B; }
+.annot.rfm.right::after { border-left-color: #BAE6FD; }
+.annot.rfm.left::after { border-right-color: #BAE6FD; }
+
+.legend { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px 24px; max-width: 920px; margin: 48px auto 0; display: grid; grid-template-columns: 1fr 1fr; gap: 12px 32px; }
+.legend-item { display: flex; align-items: flex-start; gap: 10px; color: #C0CDE8; font-size: 13px; line-height: 1.55; }
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+
+@media (max-width: 1100px) { .screens-row { flex-direction: column; align-items: center; } .screen-arrow { flex-direction: row; padding-top: 0; padding: 20px 0; } .legend { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div class="badge">LG AI 청소년캠프 · 팀 AIG · UI v3 — RFM 기반 객관 지표</div>
+  <h1>용돈 AI 앱 — UI 화면 설계</h1>
+  <p>주관적 감정 입력 제거 → RFM 모델 기반 자동 계산 지표로 전면 교체</p>
+</div>
+
+<div class="rfm-bar">
+  <div class="rfm-bar-title">📊 적용 모델: RFM (Recency · Frequency · Monetary) — DuPont Consumer Buying Habits Study (1945~1965), Stern (1962) Journal of Marketing</div>
+  <div class="rfm-items">
+    <div class="rfm-item"><div class="rfm-dot" style="background:#0891B2;"></div><div class="rfm-text"><strong>R — Recency (최근성)</strong>: 야간 구매 비율 — 밤 10시 이후 구매 ÷ 전체 구매 × 100</div></div>
+    <div class="rfm-item"><div class="rfm-dot" style="background:#7C3AED;"></div><div class="rfm-text"><strong>F — Frequency (빈도)</strong>: 단기 반복 구매 빈도 — 동일 카테고리 7일 내 재구매 횟수</div></div>
+    <div class="rfm-item"><div class="rfm-dot" style="background:#059669;"></div><div class="rfm-text"><strong>M① — Monetary (금액)</strong>: 예산 초과율 — 실제 지출 ÷ 설정 예산 × 100</div></div>
+    <div class="rfm-item"><div class="rfm-dot" style="background:#D97706;"></div><div class="rfm-text"><strong>M② — Monetary (구성)</strong>: 비필수 소비 집중도 — 오락·외식 지출 ÷ 총 지출 × 100</div></div>
+  </div>
+</div>
+
+<div class="screens-row">
+
+  <!-- ── SCREEN 1: 홈 ── -->
+  <div class="screen-wrap">
+    <div class="screen-label">
+      <div class="num">1</div>
+      <div><div class="title">홈 화면</div><div class="sub">RFM 4개 지표 실시간 표시</div></div>
+    </div>
+    <div class="annotation-wrap">
+      <div class="phone"><div class="phone-inner">
+        <div class="status-bar"><span>9:41</span><span>🔋</span></div>
+        <div class="top-nav">
+          <div><div style="font-size:11px;color:var(--sub);">안녕하세요 👋</div><div class="nav-title">김아린님</div></div>
+          <div class="nav-icon">🔔</div>
+        </div>
+        <div class="budget-card">
+          <div class="bc-label">이번 달 남은 용돈</div>
+          <div class="bc-amount">38,200<span>원</span></div>
+          <div class="progress-bar"><div class="progress-fill" style="width:62%;"></div></div>
+          <div class="bc-meta"><span>사용 61,800원</span><span>예산 100,000원</span></div>
+        </div>
+
+        <!-- RFM 4개 지표 -->
+        <div class="rfm-mini-card">
+          <div class="rfm-mini-title">📊 이번 달 소비 패턴 분석 (자동 계산)</div>
+          <div class="rfm-mini-grid">
+            <div class="rfm-mini-item r">
+              <div class="rfm-mini-tag r">R · 야간 구매 비율</div>
+              <div class="rfm-mini-val r">42%</div>
+              <div class="rfm-mini-desc">밤 10시 이후 구매 5건</div>
+            </div>
+            <div class="rfm-mini-item f">
+              <div class="rfm-mini-tag f">F · 반복 구매 빈도</div>
+              <div class="rfm-mini-val f">3회</div>
+              <div class="rfm-mini-desc">외식 카테고리 7일 내</div>
+            </div>
+            <div class="rfm-mini-item m1">
+              <div class="rfm-mini-tag m">M· 예산 초과율</div>
+              <div class="rfm-mini-val m">62%</div>
+              <div class="rfm-mini-desc">100,000원 중 61,800원</div>
+            </div>
+            <div class="rfm-mini-item m2">
+              <div class="rfm-mini-tag y">M· 비필수 소비</div>
+              <div class="rfm-mini-val y">68%</div>
+              <div class="rfm-mini-desc">오락+외식 비율</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI 피드백 -->
+        <div class="ai-card">
+          <div class="ai-header"><div class="ai-avatar">🤖</div><div><div class="ai-name">용돈이 <span class="ai-badge">AI</span></div></div></div>
+          <div class="ai-bubble">야간 구매가 <strong>42%</strong>나 돼! 밤에 사는 게 많으면 내일 후회하는 경우가 많아 🌙 오늘도 주의해봐!</div>
+        </div>
+
+        <div class="section-title">최근 소비</div>
+        <div class="card" style="padding:0;overflow:hidden;">
+          <div class="tx-item">
+            <div class="tx-icon" style="background:#FFF0E8;">🍕</div>
+            <div class="tx-info"><div class="tx-name">피자헛</div><div class="tx-meta">오늘 · 밤 11시 · 외식</div></div>
+            <div class="tx-right"><div class="tx-amount">−16,000</div><span class="rfm-tag night">🌙 야간</span></div>
+          </div>
+          <div class="tx-item">
+            <div class="tx-icon" style="background:#EDE9FE;">🎮</div>
+            <div class="tx-info"><div class="tx-name">게임 아이템</div><div class="tx-meta">어제 · 오락 · 3일 내 재구매</div></div>
+            <div class="tx-right"><div class="tx-amount">−8,000</div><span class="rfm-tag repeat">🔄 반복</span></div>
+          </div>
+          <div class="tx-item">
+            <div class="tx-icon" style="background:#DCFCE7;">🚌</div>
+            <div class="tx-info"><div class="tx-name">교통카드</div><div class="tx-meta">어제 · 오후 · 교통</div></div>
+            <div class="tx-right"><div class="tx-amount">−5,000</div><span class="rfm-tag normal">✅ 정상</span></div>
+          </div>
+        </div>
+        <div style="height:80px;"></div>
+        <div class="bottom-nav">
+          <div class="bn-item active"><div class="bn-icon">🏠</div>홈</div>
+          <div class="bn-item"><div class="bn-icon">➕</div>기록</div>
+          <div class="bn-item"><div class="bn-icon">💬</div>AI질문</div>
+          <div class="bn-item"><div class="bn-icon">📊</div>리포트</div>
+        </div>
+      </div></div>
+      <div class="annot rfm right" style="top:220px;right:-195px;">RFM 4개 지표 자동 계산</div>
+      <div class="annot right" style="top:390px;right:-175px;">AI 자연어 피드백</div>
+      <div class="annot rfm right" style="top:490px;right:-175px;">RFM 태그 자동 표시</div>
+    </div>
+  </div>
+
+  <div class="screen-arrow"><div class="arrow-icon">→</div><div class="arrow-text">기록</div></div>
+
+  <!-- ── SCREEN 2: 소비 기록 ── -->
+  <div class="screen-wrap">
+    <div class="screen-label">
+      <div class="num">2</div>
+      <div><div class="title">소비 기록 (입력)</div><div class="sub">금액·항목·카테고리·시간만 입력 → 나머지 자동</div></div>
+    </div>
+    <div class="annotation-wrap">
+      <div class="phone"><div class="phone-inner">
+        <div class="status-bar"><span>9:41</span><span>🔋</span></div>
+        <div class="top-nav"><div style="font-size:22px;">←</div><div class="nav-title">소비 기록</div><div style="width:40px;"></div></div>
+
+        <div class="form-field"><label>금액</label><input class="form-input amount-input" value="16,000원" readonly></div>
+        <div class="form-field"><label>무엇을 샀나요?</label><input class="form-input focused" value="피자헛" readonly></div>
+        <div class="form-field"><label>카테고리</label></div>
+        <div class="chip-row">
+          <div class="chip">🍔 식비</div><div class="chip active">🍕 외식</div>
+          <div class="chip">🎮 오락</div><div class="chip">🚌 교통</div><div class="chip">📚 문구</div>
+        </div>
+
+        <!-- 자동 계산 안내 박스 -->
+        <div class="auto-calc-box">
+          <div class="auto-calc-header">
+            <span>📊 RFM 지표 — 자동으로 계산됩니다</span>
+            <span class="cite">DuPont 1945~65 · Stern 1962</span>
+          </div>
+          <div class="auto-calc-body">
+            <div class="auto-calc-item">
+              <div class="ac-icon" style="background:#ECFEFF;">🌙</div>
+              <div class="ac-text">
+                <div class="ac-title" style="color:#0891B2;">R · 야간 구매 여부</div>
+                <div class="ac-desc">구매 시간 기록 → 밤 10시 이후면 자동으로 야간 태그</div>
+              </div>
+              <div class="ac-auto-badge">자동</div>
+            </div>
+            <div class="auto-calc-item">
+              <div class="ac-icon" style="background:#EDE9FE;">🔄</div>
+              <div class="ac-text">
+                <div class="ac-title" style="color:#7C3AED;">F · 단기 반복 구매</div>
+                <div class="ac-desc">같은 카테고리 7일 내 재구매 시 자동 감지</div>
+              </div>
+              <div class="ac-auto-badge">자동</div>
+            </div>
+            <div class="auto-calc-item">
+              <div class="ac-icon" style="background:#D1FAE5;">💰</div>
+              <div class="ac-text">
+                <div class="ac-title" style="color:#059669;">M · 예산 초과율 · 비필수 소비</div>
+                <div class="ac-desc">금액 + 카테고리로 예산 대비 비율 자동 계산</div>
+              </div>
+              <div class="ac-auto-badge">자동</div>
+            </div>
+          </div>
+        </div>
+
+        <button class="submit-btn"><span>🤖</span> AI에게 기록 보내기</button>
+        <div class="bottom-nav">
+          <div class="bn-item"><div class="bn-icon">🏠</div>홈</div>
+          <div class="bn-item active"><div class="bn-icon">➕</div>기록</div>
+          <div class="bn-item"><div class="bn-icon">💬</div>AI질문</div>
+          <div class="bn-item"><div class="bn-icon">📊</div>리포트</div>
+        </div>
+      </div></div>
+      <div class="annot right" style="top:95px;right:-175px;">금액·항목 입력</div>
+      <div class="annot right" style="top:185px;right:-165px;">카테고리 선택</div>
+      <div class="annot rfm right" style="top:330px;right:-190px;">RFM 자동 계산 안내</div>
+      <div class="annot rfm right" style="top:500px;right:-190px;">사용자 입력 없이 자동!</div>
+    </div>
+  </div>
+
+  <div class="screen-arrow"><div class="arrow-icon">→</div><div class="arrow-text">AI 분석</div></div>
+
+  <!-- ── SCREEN 3: AI 분석 결과 ── -->
+  <div class="screen-wrap">
+    <div class="screen-label">
+      <div class="num">3</div>
+      <div><div class="title">AI 분석 결과 (출력)</div><div class="sub">RFM 4개 지표 점수 + 피드백</div></div>
+    </div>
+    <div class="annotation-wrap">
+      <div class="phone"><div class="phone-inner">
+        <div class="status-bar"><span>9:41</span><span>🔋</span></div>
+        <div class="top-nav"><div style="font-size:22px;">←</div><div class="nav-title">AI 분석</div><div style="width:40px;"></div></div>
+
+        <div class="card">
+          <div class="card-label">📊 RFM 기반 소비 패턴 점수</div>
+          <div style="font-size:12px;color:var(--sub);margin-bottom:12px;">DuPont(1945~65) · Stern(1962) Journal of Marketing</div>
+          <div style="display:flex;gap:8px;">
+            <div style="flex:1;background:#ECFEFF;border-radius:12px;padding:10px;text-align:center;">
+              <div style="font-size:10px;font-weight:700;color:#0891B2;margin-bottom:4px;">R · 야간</div>
+              <div style="font-size:24px;font-weight:900;color:#0891B2;">42%</div>
+              <div style="font-size:9px;color:#0891B2;font-weight:600;">⚠️ 주의</div>
+            </div>
+            <div style="flex:1;background:#EDE9FE;border-radius:12px;padding:10px;text-align:center;">
+              <div style="font-size:10px;font-weight:700;color:#7C3AED;margin-bottom:4px;">F · 반복</div>
+              <div style="font-size:24px;font-weight:900;color:#7C3AED;">3회</div>
+              <div style="font-size:9px;color:#7C3AED;font-weight:600;">⚠️ 주의</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px;">
+            <div style="flex:1;background:#D1FAE5;border-radius:12px;padding:10px;text-align:center;">
+              <div style="font-size:10px;font-weight:700;color:#059669;margin-bottom:4px;">M · 예산</div>
+              <div style="font-size:24px;font-weight:900;color:#059669;">62%</div>
+              <div style="font-size:9px;color:#059669;font-weight:600;">✅ 양호</div>
+            </div>
+            <div style="flex:1;background:#FEF9C3;border-radius:12px;padding:10px;text-align:center;">
+              <div style="font-size:10px;font-weight:700;color:#D97706;margin-bottom:4px;">M · 비필수</div>
+              <div style="font-size:24px;font-weight:900;color:#D97706;">68%</div>
+              <div style="font-size:9px;color:#DC2626;font-weight:600;">🔴 높음</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ai-card">
+          <div class="ai-header"><div class="ai-avatar">🤖</div><div><div class="ai-name">용돈이 <span class="ai-badge">AI 분석</span></div></div></div>
+          <div class="ai-bubble">
+            이번 달 소비 데이터 분석했어! 📊<br><br>
+            밤 10시 이후 구매가 <strong>42%</strong>로 꽤 높아. 야간 구매는 다음 날 후회로 이어지는 경우가 많거든. 그리고 오락·외식에 <strong>68%</strong>나 쓰고 있어 — 비필수 지출이 좀 높은 편이야!
+          </div>
+        </div>
+
+        <div class="section-title">📌 인사이트</div>
+        <div class="card" style="padding:14px 16px;">
+          <div class="insight-item"><div class="insight-dot" style="background:#0891B2;"></div><div class="insight-text"><strong>야간 구매 비율 42%</strong> — 밤 10시 이후 구매 5건 감지</div></div>
+          <div class="insight-item"><div class="insight-dot" style="background:#7C3AED;"></div><div class="insight-text"><strong>외식 카테고리 7일 내 3회</strong> 반복 구매</div></div>
+          <div class="insight-item"><div class="insight-dot" style="background:#DC2626;"></div><div class="insight-text">이 속도면 <strong>23일쯤</strong> 용돈 바닥 예상 💸</div></div>
+          <div class="insight-item"><div class="insight-dot" style="background:#16A34A;"></div><div class="insight-text">교통비는 정상 범위 유지 👍</div></div>
+        </div>
+
+        <div style="height:80px;"></div>
+        <div class="bottom-nav">
+          <div class="bn-item"><div class="bn-icon">🏠</div>홈</div>
+          <div class="bn-item"><div class="bn-icon">➕</div>기록</div>
+          <div class="bn-item"><div class="bn-icon">💬</div>AI질문</div>
+          <div class="bn-item active"><div class="bn-icon">📊</div>리포트</div>
+        </div>
+      </div></div>
+      <div class="annot rfm left" style="top:95px;left:-190px;">RFM 4개 점수 자동 계산</div>
+      <div class="annot left" style="top:280px;left:-175px;">LLM 자연어 피드백</div>
+      <div class="annot rfm left" style="top:430px;left:-178px;">지표별 인사이트</div>
+    </div>
+  </div>
+
+  <div class="screen-arrow"><div class="arrow-icon">→</div><div class="arrow-text">질문</div></div>
+
+  <!-- ── SCREEN 4: AI 챗봇 ── -->
+  <div class="screen-wrap">
+    <div class="screen-label">
+      <div class="num">4</div>
+      <div><div class="title">AI 질문 (선택)</div><div class="sub">RFM 근거 기반 자연어 답변</div></div>
+    </div>
+    <div class="annotation-wrap">
+      <div class="phone"><div class="phone-inner">
+        <div class="status-bar"><span>9:41</span><span>🔋</span></div>
+        <div class="top-nav"><div style="font-size:22px;">←</div><div class="nav-title">용돈이에게 질문</div><div style="width:40px;"></div></div>
+        <div class="chat-wrap">
+          <div class="chat-bubble">
+            <div class="chat-av ai">🤖</div>
+            <div class="chat-msg">안녕! 나 용돈이야 😊 소비 데이터 기반으로 뭐든 분석해줄게!</div>
+          </div>
+          <div class="chat-bubble user">
+            <div class="chat-av me">나</div>
+            <div class="chat-msg">이번 달 왜 돈이 없지?</div>
+          </div>
+          <div class="chat-bubble">
+            <div class="chat-av ai">🤖</div>
+            <div class="chat-msg">
+              데이터 분석해봤어! 📊<br><br>
+              <span class="rfm-inline-tag" style="background:#ECFEFF;color:#0891B2;">🌙 R · 야간 구매</span><br>
+              밤에 산 게 전체의 <strong>42%</strong>야. 야간 구매는 비필수 지출과 겹치는 경우가 많아.<br><br>
+              <span class="rfm-inline-tag" style="background:#FEF9C3;color:#D97706;">💸 M · 비필수 소비</span><br>
+              오락·외식에 <strong>68%</strong>를 쓰고 있어. 필수 지출 비중을 늘려봐!
+            </div>
+          </div>
+          <div class="chat-bubble user">
+            <div class="chat-av me">나</div>
+            <div class="chat-msg">게임 스킨 5천원 사도 돼?</div>
+          </div>
+          <div class="chat-bubble">
+            <div class="chat-av ai">🤖</div>
+            <div class="chat-msg">
+              잔액 <strong>38,200원</strong>이니까 금액은 괜찮아!<br><br>
+              <span class="rfm-inline-tag" style="background:#EDE9FE;color:#7C3AED;">🔄 F · 반복 구매</span><br>
+              근데 오락 카테고리를 이번 주만 <strong>3번째</strong> 사는 거야 — 반복 구매 주의!
+            </div>
+          </div>
+          <div class="chat-input-bar">
+            <input class="chat-input" placeholder="궁금한 거 뭐든 물어봐!" readonly>
+            <button class="chat-send">➤</button>
+          </div>
+        </div>
+        <div class="bottom-nav">
+          <div class="bn-item"><div class="bn-icon">🏠</div>홈</div>
+          <div class="bn-item"><div class="bn-icon">➕</div>기록</div>
+          <div class="bn-item active"><div class="bn-icon">💬</div>AI질문</div>
+          <div class="bn-item"><div class="bn-icon">📊</div>리포트</div>
+        </div>
+      </div></div>
+      <div class="annot rfm left" style="top:200px;left:-178px;">RFM 지표 태그로 구분</div>
+      <div class="annot left" style="top:400px;left:-175px;">반복구매 자동 감지</div>
+    </div>
+  </div>
+
+</div>
+
+<div class="legend">
+  <div style="grid-column:1/-1;color:#E0E8FF;font-size:14px;font-weight:700;margin-bottom:4px;">📋 변경 핵심 포인트 (v2 → v3)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#DC2626;"></div><strong style="color:#FCA5A5;">삭제됨:</strong> 인지 차원(계획/즉흥 버튼), 감정 차원(신남/그냥/후회 버튼) — 주관적 자기보고 항목 전부 제거</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#0891B2;"></div><strong style="color:#67E8F9;">추가됨 R:</strong> 야간 구매 비율 — 구매 시간에서 자동 계산 (밤 10시 이후)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#7C3AED;"></div><strong style="color:#C4B5FD;">추가됨 F:</strong> 단기 반복 구매 빈도 — 카테고리 + 날짜에서 자동 계산 (7일 내)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#059669;"></div><strong style="color:#6EE7B7;">추가됨 M①:</strong> 예산 초과율 — 금액 + 예산 설정에서 자동 계산</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#D97706;"></div><strong style="color:#FCD34D;">추가됨 M②:</strong> 비필수 소비 집중도 — 카테고리 분류에서 자동 계산</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#16A34A;"></div>입력 화면이 더 단순해짐 — 금액·항목·카테고리만 입력하면 나머지는 전부 AI가 자동으로!</div>
+</div>
+
+</body>
+</html>

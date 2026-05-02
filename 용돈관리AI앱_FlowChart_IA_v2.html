@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>용돈 AI — FlowChart & IA v2 (RFM 기반)</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Noto Sans KR', sans-serif; background: #FAF9F7; padding: 48px; min-width: 1200px; }
+.doc-header { margin-bottom: 48px; }
+.doc-header .team { font-size: 12px; font-weight: 700; color: #999; letter-spacing: 0.12em; margin-bottom: 8px; }
+.doc-header h1 { font-size: 32px; font-weight: 900; color: #1A1A1A; letter-spacing: -0.03em; margin-bottom: 6px; }
+.doc-header p { font-size: 13px; color: #888; }
+.section { margin-bottom: 80px; }
+.section-title { font-size: 26px; font-weight: 900; color: #1A1A1A; margin-bottom: 28px; padding-bottom: 10px; border-bottom: 2px solid #1A1A1A; }
+.legend { display: flex; gap: 18px; flex-wrap: wrap; margin-bottom: 24px; padding: 12px 18px; background: white; border-radius: 10px; border: 1px solid #E5E2DC; width: fit-content; }
+.lg { display: flex; align-items: center; gap: 7px; font-size: 11px; color: #555; font-weight: 600; }
+.lg-box { width: 14px; height: 14px; border-radius: 3px; }
+.flow-wrap { background: #fff; border: 1px solid #E5E2DC; border-radius: 16px; padding: 36px; overflow-x: auto; }
+.ia-wrap { background: #fff; border: 1px solid #E5E2DC; border-radius: 16px; padding: 36px; overflow-x: auto; }
+
+/* NODE STYLES */
+.node-page { fill: #2C1810; rx: 6; }
+.node-page-text { fill: white; font-size: 13px; font-weight: 700; font-family: 'Noto Sans KR', sans-serif; }
+.node-action { fill: white; stroke: #2C1810; stroke-width: 1.5; rx: 6; }
+.node-action-text { fill: #2C1810; font-size: 12px; font-weight: 500; font-family: 'Noto Sans KR', sans-serif; }
+.node-cond { fill: white; stroke: #2C1810; stroke-width: 1.5; }
+.node-cond-text { fill: #2C1810; font-size: 11px; font-weight: 600; font-family: 'Noto Sans KR', sans-serif; }
+.node-data { fill: #F5F0EA; stroke: #C8BFB5; stroke-width: 1.5; rx: 14; }
+.node-data-text { fill: #6B5E52; font-size: 11px; font-weight: 600; font-family: 'Noto Sans KR', sans-serif; }
+.node-rfm { fill: #ECFEFF; stroke: #0891B2; stroke-width: 2; rx: 6; }
+.node-rfm-text { fill: #0E4F6B; font-size: 11px; font-weight: 700; font-family: 'Noto Sans KR', sans-serif; }
+.node-rfm-f { fill: #EDE9FE; stroke: #7C3AED; stroke-width: 2; rx: 6; }
+.node-rfm-f-text { fill: #3B0764; font-size: 11px; font-weight: 700; font-family: 'Noto Sans KR', sans-serif; }
+.node-rfm-m { fill: #D1FAE5; stroke: #059669; stroke-width: 2; rx: 6; }
+.node-rfm-m-text { fill: #064E3B; font-size: 11px; font-weight: 700; font-family: 'Noto Sans KR', sans-serif; }
+
+.arrow { stroke: #2C1810; stroke-width: 1.5; fill: none; marker-end: url(#arr); }
+.arrow-yes { stroke: #16A34A; stroke-width: 1.5; fill: none; marker-end: url(#arr-yes); }
+.arrow-no { stroke: #DC2626; stroke-width: 1.5; fill: none; marker-end: url(#arr-no); }
+.label-yes { fill: #16A34A; font-size: 10px; font-weight: 700; font-family: 'Noto Sans KR', sans-serif; }
+.label-no { fill: #DC2626; font-size: 10px; font-weight: 700; font-family: 'Noto Sans KR', sans-serif; }
+.ia-line { stroke: #2C1810; stroke-width: 1.2; fill: none; }
+.ia-L1 { fill: #2C1810; rx: 5; }
+.ia-L1-text { fill: white; font-size: 12px; font-weight: 700; font-family: 'Noto Sans KR', sans-serif; }
+.ia-L2 { fill: white; stroke: #2C1810; stroke-width: 1.5; rx: 5; }
+.ia-L2-text { fill: #2C1810; font-size: 11px; font-weight: 500; font-family: 'Noto Sans KR', sans-serif; }
+.ia-L3 { fill: #F5F0EA; stroke: #C8BFB5; stroke-width: 1; rx: 4; }
+.ia-L3-text { fill: #6B5E52; font-size: 10px; font-weight: 500; font-family: 'Noto Sans KR', sans-serif; }
+</style>
+</head>
+<body>
+
+<div class="doc-header">
+  <div class="team">LG AI 청소년캠프 · 팀 AIG · 용돈 관리 AI 앱 — v2 (RFM 기반 개정)</div>
+  <h1>FlowChart & IA</h1>
+  <p>주관적 감정 입력 제거 → RFM 모델(DuPont 1945~65, Stern 1962) 기반 자동 계산 지표로 전면 교체</p>
+</div>
+
+<!-- SECTION 1: FLOWCHART -->
+<div class="section">
+  <div class="section-title">FlowChart</div>
+  <div class="legend">
+    <div class="lg"><div class="lg-box" style="background:#2C1810;"></div>화면(페이지)</div>
+    <div class="lg"><div class="lg-box" style="background:white;border:1.5px solid #2C1810;"></div>기능/액션</div>
+    <div class="lg"><div class="lg-box" style="background:#ECFEFF;border:2px solid #0891B2;"></div>R · 야간 구매 비율 (자동)</div>
+    <div class="lg"><div class="lg-box" style="background:#EDE9FE;border:2px solid #7C3AED;"></div>F · 반복 구매 빈도 (자동)</div>
+    <div class="lg"><div class="lg-box" style="background:#D1FAE5;border:2px solid #059669;"></div>M · 예산·비필수 소비 (자동)</div>
+    <div class="lg"><div style="width:20px;height:2px;background:#16A34A;"></div>YES</div>
+    <div class="lg"><div style="width:20px;height:2px;background:#DC2626;"></div>NO</div>
+  </div>
+  <div class="flow-wrap">
+    <svg width="1100" height="780" viewBox="0 0 1100 780">
+      <defs>
+        <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#2C1810"/></marker>
+        <marker id="arr-yes" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#16A34A"/></marker>
+        <marker id="arr-no" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#DC2626"/></marker>
+      </defs>
+
+      <!-- 사용자 -->
+      <circle cx="52" cy="90" r="30" fill="#E5E2DC"/>
+      <text x="52" y="87" text-anchor="middle" font-size="20" font-family="sans-serif">👤</text>
+      <text x="52" y="135" text-anchor="middle" font-size="10" fill="#666" font-family="Noto Sans KR,sans-serif" font-weight="600">사용자</text>
+      <line x1="82" y1="90" x2="115" y2="90" class="arrow"/>
+
+      <!-- 스플래시 -->
+      <rect x="117" y="68" width="90" height="44" class="node-page" rx="6"/>
+      <text x="162" y="95" text-anchor="middle" class="node-page-text">스플래시</text>
+      <line x1="207" y1="90" x2="240" y2="90" class="arrow"/>
+
+      <!-- 로그인 -->
+      <rect x="242" y="68" width="110" height="44" class="node-page" rx="6"/>
+      <text x="297" y="89" text-anchor="middle" class="node-page-text">로그인/</text>
+      <text x="297" y="104" text-anchor="middle" class="node-page-text">회원가입</text>
+      <line x1="352" y1="90" x2="385" y2="90" class="arrow"/>
+
+      <!-- 온보딩 예산설정 -->
+      <rect x="387" y="68" width="120" height="44" class="node-page" rx="6"/>
+      <text x="447" y="89" text-anchor="middle" class="node-page-text">온보딩</text>
+      <text x="447" y="104" text-anchor="middle" class="node-page-text">(예산 설정)</text>
+      <line x1="507" y1="90" x2="540" y2="90" class="arrow"/>
+      <text x="430" y="142" text-anchor="middle" font-size="9" fill="#888" font-family="Noto Sans KR,sans-serif">이번 달 용돈 + 저축 목표 입력</text>
+
+      <!-- 홈 -->
+      <rect x="542" y="68" width="110" height="44" class="node-page" rx="6"/>
+      <text x="597" y="89" text-anchor="middle" class="node-page-text">홈</text>
+      <text x="597" y="104" text-anchor="middle" class="node-page-text">(메인)</text>
+
+      <!-- 홈에서 소비기록으로 -->
+      <line x1="597" y1="112" x2="597" y2="165" class="arrow"/>
+
+      <!-- 소비기록 화면 -->
+      <rect x="537" y="167" width="120" height="44" class="node-page" rx="6"/>
+      <text x="597" y="187" text-anchor="middle" class="node-page-text">소비 기록</text>
+      <text x="597" y="202" text-anchor="middle" class="node-page-text">화면</text>
+
+      <!-- 입력: 금액·항목·카테고리·시간 -->
+      <rect x="387" y="237" width="130" height="36" class="node-action" rx="5"/>
+      <text x="452" y="251" text-anchor="middle" class="node-action-text">금액 · 항목명</text>
+      <text x="452" y="265" text-anchor="middle" class="node-action-text">카테고리 · 시간 입력</text>
+
+      <line x1="537" y1="189" x2="517" y2="189" stroke="#2C1810" stroke-width="1.5"/>
+      <line x1="517" y1="189" x2="517" y2="255" stroke="#2C1810" stroke-width="1.5"/>
+      <line x1="517" y1="255" x2="517" y2="255" class="arrow"/>
+
+      <!-- RFM 자동 계산 (3개) -->
+      <!-- R -->
+      <rect x="570" y="237" width="130" height="44" class="node-rfm" rx="6"/>
+      <text x="635" y="255" text-anchor="middle" class="node-rfm-text">R · 야간 구매 비율</text>
+      <text x="635" y="270" text-anchor="middle" font-size="9" fill="#0891B2" font-family="Noto Sans KR,sans-serif">구매시간 → 자동계산</text>
+      <text x="635" y="283" text-anchor="middle" font-size="8" fill="#0891B2" font-family="Noto Sans KR,sans-serif">Stern, J.of Marketing 1962</text>
+
+      <!-- F -->
+      <rect x="710" y="237" width="130" height="44" class="node-rfm-f" rx="6"/>
+      <text x="775" y="255" text-anchor="middle" class="node-rfm-f-text">F · 반복 구매 빈도</text>
+      <text x="775" y="270" text-anchor="middle" font-size="9" fill="#7C3AED" font-family="Noto Sans KR,sans-serif">카테고리+날짜 → 자동</text>
+      <text x="775" y="283" text-anchor="middle" font-size="8" fill="#7C3AED" font-family="Noto Sans KR,sans-serif">DuPont Buying Study 1945</text>
+
+      <!-- M -->
+      <rect x="850" y="237" width="130" height="44" class="node-rfm-m" rx="6"/>
+      <text x="915" y="252" text-anchor="middle" class="node-rfm-m-text">M · 예산초과율</text>
+      <text x="915" y="265" text-anchor="middle" class="node-rfm-m-text">+ 비필수소비 집중도</text>
+      <text x="915" y="278" text-anchor="middle" font-size="8" fill="#059669" font-family="Noto Sans KR,sans-serif">금액+카테고리 → 자동</text>
+
+      <!-- 연결선 -->
+      <line x1="597" y1="211" x2="597" y2="237" class="arrow"/>
+      <line x1="597" y1="224" x2="635" y2="224" stroke="#2C1810" stroke-width="1.5"/>
+      <line x1="635" y1="224" x2="775" y2="224" stroke="#2C1810" stroke-width="1.5"/>
+      <line x1="775" y1="224" x2="915" y2="224" stroke="#2C1810" stroke-width="1.5"/>
+      <line x1="635" y1="224" x2="635" y2="237" class="arrow"/>
+      <line x1="775" y1="224" x2="775" y2="237" class="arrow"/>
+      <line x1="915" y1="224" x2="915" y2="237" class="arrow"/>
+
+      <!-- 합류 → LLM 분석 -->
+      <line x1="452" y1="273" x2="452" y2="316" stroke="#2C1810" stroke-width="1.5"/>
+      <line x1="635" y1="281" x2="635" y2="316" stroke="#2C1810" stroke-width="1.5"/>
+      <line x1="775" y1="281" x2="775" y2="316" stroke="#2C1810" stroke-width="1.5"/>
+      <line x1="915" y1="281" x2="915" y2="316" stroke="#2C1810" stroke-width="1.5"/>
+      <line x1="452" y1="316" x2="915" y2="316" stroke="#2C1810" stroke-width="1.5"/>
+      <line x1="680" y1="316" x2="680" y2="345" class="arrow"/>
+
+      <!-- LLM 분석 -->
+      <rect x="610" y="347" width="140" height="40" class="node-action" rx="5"/>
+      <text x="680" y="363" text-anchor="middle" class="node-action-text">LLM 분석 요청</text>
+      <text x="680" y="378" text-anchor="middle" class="node-action-text">RFM 4지표 기반</text>
+      <line x1="680" y1="387" x2="680" y2="417" class="arrow"/>
+
+      <!-- 분기: 이력 있음? -->
+      <polygon points="680,419 740,449 680,479 620,449" class="node-cond"/>
+      <text x="680" y="444" text-anchor="middle" class="node-cond-text">소비</text>
+      <text x="680" y="458" text-anchor="middle" class="node-cond-text">이력 있음?</text>
+
+      <!-- YES -->
+      <line x1="740" y1="449" x2="810" y2="449" class="arrow-yes"/>
+      <text x="772" y="443" text-anchor="middle" class="label-yes">YES</text>
+
+      <!-- NO -->
+      <line x1="680" y1="479" x2="680" y2="509" class="arrow-no"/>
+      <text x="690" y="498" class="label-no">NO</text>
+
+      <!-- 기본 요약 -->
+      <rect x="610" y="511" width="140" height="36" class="node-action" rx="5"/>
+      <text x="680" y="526" text-anchor="middle" class="node-action-text">기본 소비 요약</text>
+      <text x="680" y="541" text-anchor="middle" class="node-action-text">피드백 제공</text>
+      <line x1="750" y1="529" x2="810" y2="449" class="arrow-yes"/>
+
+      <!-- AI 분석 결과 화면 -->
+      <rect x="812" y="427" width="120" height="44" class="node-page" rx="6"/>
+      <text x="872" y="447" text-anchor="middle" class="node-page-text">AI 분석</text>
+      <text x="872" y="462" text-anchor="middle" class="node-page-text">결과 화면</text>
+      <line x1="872" y1="471" x2="872" y2="505" class="arrow"/>
+
+      <!-- RFM 결과 표시 -->
+      <rect x="812" y="507" width="120" height="50" class="node-rfm" rx="5"/>
+      <text x="872" y="523" text-anchor="middle" class="node-rfm-text">R·F·M 4개 지표</text>
+      <text x="872" y="537" text-anchor="middle" class="node-rfm-text">점수 + 시각화</text>
+      <text x="872" y="551" text-anchor="middle" font-size="8" fill="#0891B2" font-family="Noto Sans KR,sans-serif">자동 계산 결과 표시</text>
+      <line x1="872" y1="557" x2="872" y2="590" class="arrow"/>
+
+      <!-- AI 피드백 -->
+      <rect x="812" y="592" width="120" height="36" class="node-action" rx="5"/>
+      <text x="872" y="607" text-anchor="middle" class="node-action-text">LLM 자연어</text>
+      <text x="872" y="621" text-anchor="middle" class="node-action-text">피드백 생성</text>
+      <line x1="872" y1="628" x2="872" y2="658" class="arrow"/>
+
+      <!-- 분기: 질문? -->
+      <polygon points="872,660 932,690 872,720 812,690" class="node-cond"/>
+      <text x="872" y="686" text-anchor="middle" class="node-cond-text">추가 질문?</text>
+
+      <!-- YES 챗봇 -->
+      <line x1="812" y1="690" x2="740" y2="690" class="arrow-yes"/>
+      <text x="773" y="683" text-anchor="middle" class="label-yes">YES</text>
+      <rect x="620" y="668" width="110" height="44" class="node-page" rx="6"/>
+      <text x="675" y="688" text-anchor="middle" class="node-page-text">AI 챗봇</text>
+      <text x="675" y="703" text-anchor="middle" class="node-page-text">화면</text>
+
+      <!-- NO 홈으로 -->
+      <line x1="872" y1="720" x2="872" y2="750" class="arrow-no"/>
+      <rect x="812" y="752" width="120" height="36" class="node-page" rx="6"/>
+      <text x="872" y="767" text-anchor="middle" class="node-page-text">홈(메인)</text>
+      <text x="872" y="782" text-anchor="middle" class="node-page-text">화면 갱신</text>
+
+      <!-- 마이페이지 분기 -->
+      <line x1="597" y1="112" x2="597" y2="580" stroke="#2C1810" stroke-width="1.5" stroke-dasharray="4,3"/>
+      <line x1="597" y1="580" x2="425" y2="580" class="arrow"/>
+      <rect x="305" y="558" width="118" height="44" class="node-page" rx="6"/>
+      <text x="364" y="578" text-anchor="middle" class="node-page-text">마이페이지</text>
+      <text x="364" y="593" text-anchor="middle" class="node-page-text">/ 리포트</text>
+
+      <!-- 유저 데이터 표시 -->
+      <rect x="830" y="155" width="90" height="28" class="node-data" rx="14"/>
+      <text x="875" y="174" text-anchor="middle" class="node-data-text">유저 데이터</text>
+      <line x1="830" y1="169" x2="780" y2="169" class="arrow" stroke-dasharray="4,3"/>
+
+      <!-- RFM 주석 박스 -->
+      <rect x="20" y="220" width="200" height="75" rx="8" fill="#ECFEFF" stroke="#0891B2" stroke-width="1.5"/>
+      <text x="35" y="240" font-size="10" font-weight="700" fill="#0E4F6B" font-family="Noto Sans KR,sans-serif">📊 RFM 자동 계산 — 사용자 입력 불필요</text>
+      <text x="35" y="258" font-size="9" fill="#0891B2" font-family="Noto Sans KR,sans-serif">R: 구매 시간 → 야간 여부 자동 판별</text>
+      <text x="35" y="273" font-size="9" fill="#7C3AED" font-family="Noto Sans KR,sans-serif">F: 카테고리+날짜 → 반복 여부 자동 감지</text>
+      <text x="35" y="288" font-size="9" fill="#059669" font-family="Noto Sans KR,sans-serif">M: 금액+카테고리 → 예산/비필수 자동 계산</text>
+    </svg>
+  </div>
+</div>
+
+<!-- SECTION 2: IA -->
+<div class="section">
+  <div class="section-title">IA (Information Architecture)</div>
+  <div class="ia-wrap">
+    <svg width="1060" height="580" viewBox="0 0 1060 580">
+
+      <!-- ROOT -->
+      <rect x="420" y="20" width="160" height="42" fill="#2C1810" rx="6"/>
+      <text x="500" y="37" text-anchor="middle" fill="white" font-size="14" font-weight="900" font-family="Noto Sans KR,sans-serif">용돈 AI 앱</text>
+      <text x="500" y="52" text-anchor="middle" fill="white" font-size="12" font-weight="700" font-family="Noto Sans KR,sans-serif">PocketAI</text>
+
+      <line x1="500" y1="62" x2="500" y2="90" class="ia-line"/>
+      <line x1="80" y1="90" x2="940" y2="90" class="ia-line"/>
+
+      <!-- L1 탭 5개 -->
+      <line x1="80" y1="90" x2="80" y2="110" class="ia-line"/>
+      <rect x="26" y="112" width="108" height="38" class="ia-L1" rx="5"/>
+      <text x="80" y="127" text-anchor="middle" class="ia-L1-text">스플래시/</text>
+      <text x="80" y="141" text-anchor="middle" class="ia-L1-text">로그인</text>
+
+      <line x1="260" y1="90" x2="260" y2="110" class="ia-line"/>
+      <rect x="206" y="112" width="108" height="38" class="ia-L1" rx="5"/>
+      <text x="260" y="127" text-anchor="middle" class="ia-L1-text">홈</text>
+      <text x="260" y="141" text-anchor="middle" class="ia-L1-text">(메인)</text>
+
+      <line x1="500" y1="90" x2="500" y2="110" class="ia-line"/>
+      <rect x="446" y="112" width="108" height="38" class="ia-L1" rx="5"/>
+      <text x="500" y="127" text-anchor="middle" class="ia-L1-text">소비 기록</text>
+      <text x="500" y="141" text-anchor="middle" class="ia-L1-text">화면</text>
+
+      <line x1="730" y1="90" x2="730" y2="110" class="ia-line"/>
+      <rect x="676" y="112" width="108" height="38" class="ia-L1" rx="5"/>
+      <text x="730" y="127" text-anchor="middle" class="ia-L1-text">AI 분석</text>
+      <text x="730" y="141" text-anchor="middle" class="ia-L1-text">결과 화면</text>
+
+      <line x1="940" y1="90" x2="940" y2="110" class="ia-line"/>
+      <rect x="886" y="112" width="108" height="38" class="ia-L1" rx="5"/>
+      <text x="940" y="127" text-anchor="middle" class="ia-L1-text">마이페이지</text>
+      <text x="940" y="141" text-anchor="middle" class="ia-L1-text">/ 리포트</text>
+
+      <!-- L2: 스플래시 -->
+      <line x1="80" y1="150" x2="80" y2="178" class="ia-line"/>
+      <line x1="46" y1="178" x2="114" y2="178" class="ia-line"/>
+      <line x1="46" y1="178" x2="46" y2="198" class="ia-line"/>
+      <rect x="6" y="200" width="80" height="30" class="ia-L2" rx="5"/>
+      <text x="46" y="215" text-anchor="middle" class="ia-L2-text">스플래시</text>
+      <text x="46" y="227" text-anchor="middle" class="ia-L2-text">화면</text>
+      <line x1="114" y1="178" x2="114" y2="198" class="ia-line"/>
+      <rect x="74" y="200" width="80" height="30" class="ia-L2" rx="5"/>
+      <text x="114" y="215" text-anchor="middle" class="ia-L2-text">회원가입</text>
+      <text x="114" y="227" text-anchor="middle" class="ia-L2-text">/ 로그인</text>
+
+      <!-- L2: 홈 -->
+      <line x1="260" y1="150" x2="260" y2="178" class="ia-line"/>
+      <line x1="196" y1="178" x2="324" y2="178" class="ia-line"/>
+      <line x1="196" y1="178" x2="196" y2="198" class="ia-line"/>
+      <rect x="156" y="200" width="80" height="30" class="ia-L2" rx="5"/>
+      <text x="196" y="215" text-anchor="middle" class="ia-L2-text">예산 현황</text>
+      <text x="196" y="227" text-anchor="middle" class="ia-L2-text">카드</text>
+      <line x1="260" y1="178" x2="260" y2="198" class="ia-line"/>
+      <rect x="220" y="200" width="80" height="30" class="ia-L2" rx="5"/>
+      <text x="260" y="215" text-anchor="middle" class="ia-L2-text">RFM 4개</text>
+      <text x="260" y="227" text-anchor="middle" class="ia-L2-text">지표 미리보기</text>
+      <line x1="324" y1="178" x2="324" y2="198" class="ia-line"/>
+      <rect x="284" y="200" width="80" height="30" class="ia-L2" rx="5"/>
+      <text x="324" y="215" text-anchor="middle" class="ia-L2-text">최근 소비</text>
+      <text x="324" y="227" text-anchor="middle" class="ia-L2-text">+ RFM 태그</text>
+
+      <!-- L3: RFM 4개 지표 미리보기 -->
+      <line x1="260" y1="230" x2="260" y2="258" class="ia-line"/>
+      <line x1="196" y1="258" x2="324" y2="258" class="ia-line"/>
+      <line x1="196" y1="258" x2="196" y2="276" class="ia-line"/>
+      <rect x="146" y="278" width="100" height="28" fill="#ECFEFF" stroke="#0891B2" stroke-width="1.5" rx="4"/>
+      <text x="196" y="293" text-anchor="middle" font-size="9" fill="#0E4F6B" font-family="Noto Sans KR,sans-serif" font-weight="700">R · 야간구매%</text>
+      <text x="196" y="305" text-anchor="middle" font-size="8" fill="#0891B2" font-family="Noto Sans KR,sans-serif">자동계산</text>
+      <line x1="260" y1="258" x2="260" y2="276" class="ia-line"/>
+      <rect x="210" y="278" width="100" height="28" fill="#EDE9FE" stroke="#7C3AED" stroke-width="1.5" rx="4"/>
+      <text x="260" y="293" text-anchor="middle" font-size="9" fill="#3B0764" font-family="Noto Sans KR,sans-serif" font-weight="700">F · 반복구매 횟수</text>
+      <text x="260" y="305" text-anchor="middle" font-size="8" fill="#7C3AED" font-family="Noto Sans KR,sans-serif">자동계산</text>
+      <line x1="324" y1="258" x2="324" y2="276" class="ia-line"/>
+      <rect x="274" y="278" width="100" height="28" fill="#D1FAE5" stroke="#059669" stroke-width="1.5" rx="4"/>
+      <text x="324" y="293" text-anchor="middle" font-size="9" fill="#064E3B" font-family="Noto Sans KR,sans-serif" font-weight="700">M · 예산%·비필수%</text>
+      <text x="324" y="305" text-anchor="middle" font-size="8" fill="#059669" font-family="Noto Sans KR,sans-serif">자동계산</text>
+
+      <!-- L2: 소비 기록 -->
+      <line x1="500" y1="150" x2="500" y2="178" class="ia-line"/>
+      <line x1="416" y1="178" x2="584" y2="178" class="ia-line"/>
+      <line x1="416" y1="178" x2="416" y2="198" class="ia-line"/>
+      <rect x="376" y="200" width="80" height="30" class="ia-L2" rx="5"/>
+      <text x="416" y="215" text-anchor="middle" class="ia-L2-text">금액 · 항목</text>
+      <text x="416" y="227" text-anchor="middle" class="ia-L2-text">카테고리 입력</text>
+      <line x1="500" y1="178" x2="500" y2="198" class="ia-line"/>
+      <rect x="460" y="200" width="80" height="30" class="ia-L2" rx="5"/>
+      <text x="500" y="215" text-anchor="middle" class="ia-L2-text">구매 시간</text>
+      <text x="500" y="227" text-anchor="middle" class="ia-L2-text">자동 기록</text>
+      <line x1="584" y1="178" x2="584" y2="198" class="ia-line"/>
+      <rect x="544" y="200" width="80" height="30" class="ia-L2" rx="5"/>
+      <text x="584" y="215" text-anchor="middle" class="ia-L2-text">카테고리</text>
+      <text x="584" y="227" text-anchor="middle" class="ia-L2-text">모달 선택</text>
+
+      <!-- L2: AI 분석 결과 -->
+      <line x1="730" y1="150" x2="730" y2="178" class="ia-line"/>
+      <line x1="648" y1="178" x2="812" y2="178" class="ia-line"/>
+      <line x1="648" y1="178" x2="648" y2="198" class="ia-line"/>
+      <rect x="600" y="200" width="96" height="30" fill="#ECFEFF" stroke="#0891B2" stroke-width="1.5" rx="5"/>
+      <text x="648" y="213" text-anchor="middle" font-size="10" fill="#0E4F6B" font-family="Noto Sans KR,sans-serif" font-weight="700">R · F · M 점수</text>
+      <text x="648" y="226" text-anchor="middle" font-size="9" fill="#0891B2" font-family="Noto Sans KR,sans-serif">4개 지표 시각화</text>
+      <line x1="730" y1="178" x2="730" y2="198" class="ia-line"/>
+      <rect x="684" y="200" width="92" height="30" class="ia-L2" rx="5"/>
+      <text x="730" y="215" text-anchor="middle" class="ia-L2-text">LLM 자연어</text>
+      <text x="730" y="227" text-anchor="middle" class="ia-L2-text">피드백</text>
+      <line x1="812" y1="178" x2="812" y2="198" class="ia-line"/>
+      <rect x="766" y="200" width="92" height="30" class="ia-L2" rx="5"/>
+      <text x="812" y="215" text-anchor="middle" class="ia-L2-text">인사이트</text>
+      <text x="812" y="227" text-anchor="middle" class="ia-L2-text">목록</text>
+
+      <!-- L2: 마이페이지 -->
+      <line x1="940" y1="150" x2="940" y2="178" class="ia-line"/>
+      <line x1="876" y1="178" x2="1004" y2="178" class="ia-line"/>
+      <line x1="876" y1="178" x2="876" y2="198" class="ia-line"/>
+      <rect x="836" y="200" width="80" height="30" class="ia-L2" rx="5"/>
+      <text x="876" y="215" text-anchor="middle" class="ia-L2-text">월간 리포트</text>
+      <text x="876" y="227" text-anchor="middle" class="ia-L2-text">(RFM 추이)</text>
+      <line x1="940" y1="178" x2="940" y2="198" class="ia-line"/>
+      <rect x="900" y="200" width="80" height="30" class="ia-L2" rx="5"/>
+      <text x="940" y="215" text-anchor="middle" class="ia-L2-text">예산 목표</text>
+      <text x="940" y="227" text-anchor="middle" class="ia-L2-text">설정</text>
+      <line x1="1004" y1="178" x2="1004" y2="198" class="ia-line"/>
+      <rect x="964" y="200" width="80" height="30" class="ia-L2" rx="5"/>
+      <text x="1004" y="215" text-anchor="middle" class="ia-L2-text">프로필</text>
+      <text x="1004" y="227" text-anchor="middle" class="ia-L2-text">/ 설정</text>
+
+      <!-- RFM 주석 -->
+      <rect x="20" y="460" width="380" height="58" rx="8" fill="#ECFEFF" stroke="#0891B2" stroke-width="1.5"/>
+      <text x="35" y="478" font-size="11" font-weight="700" fill="#0E4F6B" font-family="Noto Sans KR,sans-serif">📊 파란/보라/초록 박스 = RFM 자동 계산 지표</text>
+      <text x="35" y="494" font-size="10" fill="#0891B2" font-family="Noto Sans KR,sans-serif">R: Recency (야간구매비율) · F: Frequency (반복구매빈도)</text>
+      <text x="35" y="509" font-size="10" fill="#059669" font-family="Noto Sans KR,sans-serif">M: Monetary (예산초과율 + 비필수소비집중도)</text>
+
+      <rect x="420" y="460" width="380" height="58" rx="8" fill="#F5F0EA" stroke="#C8BFB5" stroke-width="1.5"/>
+      <text x="435" y="478" font-size="11" font-weight="700" fill="#2C1810" font-family="Noto Sans KR,sans-serif">📚 학술 근거</text>
+      <text x="435" y="494" font-size="10" fill="#6B5E52" font-family="Noto Sans KR,sans-serif">DuPont Consumer Buying Habits Study (1945~1965)</text>
+      <text x="435" y="509" font-size="10" fill="#6B5E52" font-family="Noto Sans KR,sans-serif">Stern, H. (1962). Journal of Marketing, 26(2), 59-62.</text>
+
+    </svg>
+  </div>
+</div>
+
+</body>
+</html>
